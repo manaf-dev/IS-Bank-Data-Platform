@@ -367,3 +367,84 @@ holdings:
   # Cards, loans, and fixed deposits open no earlier than this many months before
   # start_date, so the pre-window book is recent and most contracts are live in the window.
   dependent_open_lookback_months: 24
+
+# ---------------------------------------------------------------- merchants
+merchants:
+  per_1000_customers: 40
+  # Share of a customer's card purchases made at merchants in their home branch's city.
+  local_share: 0.85
+  # channel: where the category trades (pos, online, or both).
+  categories:
+    grocery: { mcc: "5411", weight: 0.22, channel: pos, label: Supermarket }
+    fuel: { mcc: "5541", weight: 0.12, channel: pos, label: Filling Station }
+    restaurant: { mcc: "5812", weight: 0.12, channel: pos, label: Restaurant }
+    pharmacy: { mcc: "5912", weight: 0.08, channel: pos, label: Pharmacy }
+    clothing: { mcc: "5651", weight: 0.08, channel: both, label: Fashion House }
+    electronics: { mcc: "5732", weight: 0.06, channel: both, label: Electronics }
+    hardware: { mcc: "5251", weight: 0.06, channel: pos, label: Hardware }
+    airtime_data: { mcc: "4814", weight: 0.10, channel: online, label: Telecom Top-Up }
+    betting: { mcc: "7995", weight: 0.06, channel: online, label: Sports Betting }
+    travel: { mcc: "4722", weight: 0.04, channel: online, label: Travel Agency }
+    hotel: { mcc: "7011", weight: 0.03, channel: both, label: Hotel }
+    education: { mcc: "8220", weight: 0.03, channel: both, label: School }
+
+# ---------------------------------------------------------------- behaviour
+# Monthly money flows. Inflows and spending are expressed relative to monthly income, so
+# balances stay plausible at any income level. Declined debits (insufficient funds) are
+# kept with status DECLINED; they become card-switch response codes and missed payments.
+behaviour:
+  # Per-customer multiplier on discretionary event counts (lognormal), plus a dormant share.
+  activity: { median: 0.8, sigma: 0.5, dormant_share: 0.10, dormant_multiplier: 0.05 }
+  # Balance held at start_date by accounts opened before the window, as income multiple.
+  opening_balance_income_multiple: { median: 1.2, sigma: 0.7 }
+  # Share of a month's expected income a customer spends (truncated normal per customer).
+  spend_ratio: { mean: 0.88, sd: 0.07, min: 0.5, max: 1.0 }
+  # Month-to-month variation of salary and business income.
+  income_noise_sd: 0.05
+  # Pay day range per salaried segment (one fixed day per customer, clamped to month end).
+  salary_day:
+    civil_servant: { min: 20, max: 25 }
+    corporate_employee: { min: 25, max: 31 }
+  # Non-salaried segments receive income as several irregular inflows (Poisson mean/month).
+  irregular_inflows:
+    market_trader: { events: 2, channels: { BRANCH_CASH_DEPOSIT: 0.6, MOMO_TO_BANK: 0.3, TRANSFER_IN: 0.1 } }
+    susu_saver: { events: 3, channels: { BRANCH_CASH_DEPOSIT: 0.8, MOMO_TO_BANK: 0.2 } }
+    sme: { events: 3, channels: { BRANCH_CASH_DEPOSIT: 0.4, MOMO_TO_BANK: 0.2, TRANSFER_IN: 0.4 } }
+  # Discretionary debits: Poisson mean per month and channel mix per segment. Channels the
+  # customer can't use yet (no card, no MoMo link, no mobile banking) fall back to branch.
+  spending:
+    civil_servant:
+      events: 3
+      channels: { ATM_WITHDRAWAL: 0.30, BRANCH_WITHDRAWAL: 0.10, POS_PURCHASE: 0.20, ONLINE_PURCHASE: 0.05, BANK_TO_MOMO: 0.20, TRANSFER_OUT: 0.05, BILL_PAYMENT: 0.10 }
+    corporate_employee:
+      events: 4
+      channels: { ATM_WITHDRAWAL: 0.20, BRANCH_WITHDRAWAL: 0.05, POS_PURCHASE: 0.30, ONLINE_PURCHASE: 0.12, BANK_TO_MOMO: 0.15, TRANSFER_OUT: 0.08, BILL_PAYMENT: 0.10 }
+    market_trader:
+      events: 2
+      channels: { ATM_WITHDRAWAL: 0.15, BRANCH_WITHDRAWAL: 0.40, POS_PURCHASE: 0.05, ONLINE_PURCHASE: 0.02, BANK_TO_MOMO: 0.30, TRANSFER_OUT: 0.05, BILL_PAYMENT: 0.03 }
+    susu_saver:
+      events: 1
+      channels: { ATM_WITHDRAWAL: 0.10, BRANCH_WITHDRAWAL: 0.60, POS_PURCHASE: 0.02, ONLINE_PURCHASE: 0.01, BANK_TO_MOMO: 0.25, TRANSFER_OUT: 0.01, BILL_PAYMENT: 0.01 }
+    sme:
+      events: 4
+      channels: { ATM_WITHDRAWAL: 0.05, BRANCH_WITHDRAWAL: 0.20, POS_PURCHASE: 0.10, ONLINE_PURCHASE: 0.05, BANK_TO_MOMO: 0.15, TRANSFER_OUT: 0.35, BILL_PAYMENT: 0.10 }
+  # Account the customer transacts through: the first one they hold, in this order.
+  operating_account_priority: [CA_BIZ, CA_PER, SA_SUSU, SA_REG]
+  # Share of each month's unspent income swept to a regular savings account, if held.
+  savings_sweep_share: 0.5
+  # Spending (and trader/SME inflow) multiplier by calendar month: Christmas, school fees
+  # in January and September, Easter around April.
+  seasonality: { 1: 1.10, 2: 0.95, 3: 1.00, 4: 1.05, 5: 0.95, 6: 0.95, 7: 0.95, 8: 1.00, 9: 1.15, 10: 0.95, 11: 1.00, 12: 1.30 }
+  # Hour-of-day weights for electronic channels (00:00 to 23:00).
+  hour_weights: [1, 0.5, 0.3, 0.3, 0.5, 1, 3, 5, 7, 8, 8, 8, 9, 8, 8, 8, 8, 9, 9, 8, 7, 5, 3, 2]
+  # Branch counters are open these hours, Monday to Saturday.
+  branch_hours: { open: 8, close: 17 }
+  credit_card:
+    # Share of eligible card purchases put on the credit card rather than the debit card.
+    purchase_share: 0.5
+    repayment_day: 15
+    pay_full_share: 0.6
+    min_payment_pct: 10
+  monthly_fee_ghs: { CA_PER: 10, CA_BIZ: 25 }
+  counterparty_banks: [Volta Commercial Bank, Ashanti Trust Bank, Coastline Bank, Savannah Savings & Loans, Gold Coast Merchant Bank, Sahel Rural Bank]
+  billers: { electricity: 0.35, water: 0.15, pay_tv: 0.20, school_fees: 0.15, insurance: 0.15 }

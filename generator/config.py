@@ -106,6 +106,74 @@ class CustomerParams:
 
 
 @dataclass(frozen=True)
+class MerchantCategory:
+    """A merchant category (MCC) and how often card spend goes to it."""
+
+    name: str
+    mcc: str
+    weight: float
+    channel: str  # "pos", "online", or "both"
+    label: str
+
+
+@dataclass(frozen=True)
+class MerchantParams:
+    """How the merchant population is generated and chosen for purchases."""
+
+    per_1000_customers: float
+    local_share: float
+    categories: dict[str, MerchantCategory]
+
+
+@dataclass(frozen=True)
+class FlowMix:
+    """Poisson mean of monthly events and the channel mix for one segment."""
+
+    events: float
+    channels: dict[str, float]
+
+
+@dataclass(frozen=True)
+class CreditCardParams:
+    """Credit card usage and repayment behaviour."""
+
+    purchase_share: float
+    repayment_day: int
+    pay_full_share: float
+    min_payment_pct: float
+
+
+@dataclass(frozen=True)
+class BehaviourParams:
+    """Rates that drive monthly money flows (see `behaviour:` in config.yaml)."""
+
+    activity_median: float
+    activity_sigma: float
+    dormant_share: float
+    dormant_multiplier: float
+    opening_balance_median: float
+    opening_balance_sigma: float
+    spend_ratio_mean: float
+    spend_ratio_sd: float
+    spend_ratio_min: float
+    spend_ratio_max: float
+    income_noise_sd: float
+    salary_day: dict[str, tuple[int, int]]
+    irregular_inflows: dict[str, FlowMix]
+    spending: dict[str, FlowMix]
+    operating_account_priority: tuple[str, ...]
+    savings_sweep_share: float
+    seasonality: dict[int, float]
+    hour_weights: tuple[float, ...]
+    branch_open_hour: int
+    branch_close_hour: int
+    credit_card: CreditCardParams
+    monthly_fee_ghs: dict[str, float]
+    counterparty_banks: tuple[str, ...]
+    billers: dict[str, float]
+
+
+@dataclass(frozen=True)
 class WorldConfig:
     """The fully resolved, validated generator config for one profile."""
 
@@ -123,6 +191,8 @@ class WorldConfig:
     momo_same_number_share: float
     contract_amount_rounding_ghs: int
     dependent_open_lookback_months: int
+    merchants: MerchantParams
+    behaviour: BehaviourParams
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH, profile: str = "dev") -> WorldConfig:
@@ -221,6 +291,8 @@ def validate(config: WorldConfig) -> list[str]:
         problems.append("holdings.contract_amount_rounding_ghs must be positive")
     if config.dependent_open_lookback_months < 0:
         problems.append("holdings.dependent_open_lookback_months must be non-negative")
+    _check_merchants(problems, config.merchants)
+    _check_behaviour(problems, config, segments)
     if cust.count <= 0:
         problems.append("customers.count must be positive")
     for field in ("pre_window_share", "female_share", "email_digit_suffix_share"):
@@ -335,6 +407,69 @@ def _build(raw: dict[str, Any], profile: str) -> WorldConfig:
         momo_same_number_share=float(raw["holdings"]["momo_same_number_share"]),
         contract_amount_rounding_ghs=int(raw["holdings"]["contract_amount_rounding_ghs"]),
         dependent_open_lookback_months=int(raw["holdings"]["dependent_open_lookback_months"]),
+        merchants=_build_merchants(raw["merchants"]),
+        behaviour=_build_behaviour(raw["behaviour"]),
+    )
+
+
+def _build_merchants(raw: dict[str, Any]) -> MerchantParams:
+    return MerchantParams(
+        per_1000_customers=float(raw["per_1000_customers"]),
+        local_share=float(raw["local_share"]),
+        categories={
+            name: MerchantCategory(
+                name=name,
+                mcc=str(c["mcc"]),
+                weight=float(c["weight"]),
+                channel=c["channel"],
+                label=c["label"],
+            )
+            for name, c in raw["categories"].items()
+        },
+    )
+
+
+def _build_behaviour(raw: dict[str, Any]) -> BehaviourParams:
+    def flows(section: dict[str, Any]) -> dict[str, FlowMix]:
+        return {
+            seg: FlowMix(events=float(v["events"]), channels=v["channels"])
+            for seg, v in section.items()
+        }
+
+    act = raw["activity"]
+    bal = raw["opening_balance_income_multiple"]
+    spend = raw["spend_ratio"]
+    cc = raw["credit_card"]
+    return BehaviourParams(
+        activity_median=float(act["median"]),
+        activity_sigma=float(act["sigma"]),
+        dormant_share=float(act["dormant_share"]),
+        dormant_multiplier=float(act["dormant_multiplier"]),
+        opening_balance_median=float(bal["median"]),
+        opening_balance_sigma=float(bal["sigma"]),
+        spend_ratio_mean=float(spend["mean"]),
+        spend_ratio_sd=float(spend["sd"]),
+        spend_ratio_min=float(spend["min"]),
+        spend_ratio_max=float(spend["max"]),
+        income_noise_sd=float(raw["income_noise_sd"]),
+        salary_day={s: (int(d["min"]), int(d["max"])) for s, d in raw["salary_day"].items()},
+        irregular_inflows=flows(raw["irregular_inflows"]),
+        spending=flows(raw["spending"]),
+        operating_account_priority=tuple(raw["operating_account_priority"]),
+        savings_sweep_share=float(raw["savings_sweep_share"]),
+        seasonality={int(m): float(v) for m, v in raw["seasonality"].items()},
+        hour_weights=tuple(float(w) for w in raw["hour_weights"]),
+        branch_open_hour=int(raw["branch_hours"]["open"]),
+        branch_close_hour=int(raw["branch_hours"]["close"]),
+        credit_card=CreditCardParams(
+            purchase_share=float(cc["purchase_share"]),
+            repayment_day=int(cc["repayment_day"]),
+            pay_full_share=float(cc["pay_full_share"]),
+            min_payment_pct=float(cc["min_payment_pct"]),
+        ),
+        monthly_fee_ghs={k: float(v) for k, v in raw["monthly_fee_ghs"].items()},
+        counterparty_banks=tuple(raw["counterparty_banks"]),
+        billers=raw["billers"],
     )
 
 
@@ -413,3 +548,81 @@ def _check_product_structure(problems: list[str], p: Product, by_code: dict[str,
         else:
             tenor_weights = dict(zip(map(str, terms.term_months), weights, strict=True))
             _check_weights(problems, f"{code}.term_months", tenor_weights)
+
+
+INFLOW_CHANNELS = frozenset({"BRANCH_CASH_DEPOSIT", "MOMO_TO_BANK", "TRANSFER_IN"})
+SPEND_CHANNELS = frozenset(
+    {
+        "ATM_WITHDRAWAL",
+        "BRANCH_WITHDRAWAL",
+        "POS_PURCHASE",
+        "ONLINE_PURCHASE",
+        "BANK_TO_MOMO",
+        "TRANSFER_OUT",
+        "BILL_PAYMENT",
+    }
+)
+
+
+def _check_merchants(problems: list[str], m: MerchantParams) -> None:
+    if m.per_1000_customers <= 0:
+        problems.append("merchants.per_1000_customers must be positive")
+    if not 0 <= m.local_share <= 1:
+        problems.append("merchants.local_share must be in [0, 1]")
+    weights = {k: c.weight for k, c in m.categories.items()}
+    _check_weights(problems, "merchants.categories", weights)
+    for c in m.categories.values():
+        if c.channel not in {"pos", "online", "both"}:
+            problems.append(f"merchants.{c.name}: channel must be pos, online, or both")
+    channels = {c.channel for c in m.categories.values()}
+    if not {"online", "both"} & channels or not {"pos", "both"} & channels:
+        problems.append("merchants: need categories for both POS and online purchases")
+
+
+def _check_behaviour(problems: list[str], config: WorldConfig, segments: set[str]) -> None:
+    b = config.behaviour
+    salaried = set(b.salary_day)
+    irregular = set(b.irregular_inflows)
+    if salaried & irregular or salaried | irregular != segments:
+        problems.append(
+            "behaviour: each segment needs exactly one of salary_day or irregular_inflows"
+        )
+    if set(b.spending) != segments:
+        problems.append("behaviour.spending must cover every segment")
+    for seg, (lo, hi) in b.salary_day.items():
+        if not 1 <= lo <= hi <= 31:
+            problems.append(f"behaviour.salary_day.{seg}: need 1 <= min <= max <= 31")
+    for label, mixes, allowed in (
+        ("irregular_inflows", b.irregular_inflows, INFLOW_CHANNELS),
+        ("spending", b.spending, SPEND_CHANNELS),
+    ):
+        for seg, mix in mixes.items():
+            if mix.events < 0:
+                problems.append(f"behaviour.{label}.{seg}.events must be non-negative")
+            if unknown := set(mix.channels) - allowed:
+                problems.append(f"behaviour.{label}.{seg}: unknown channels {sorted(unknown)}")
+            _check_weights(problems, f"behaviour.{label}.{seg}.channels", mix.channels)
+    standalone = {p.product_code for p in config.products if not p.requires_any}
+    if not set(b.operating_account_priority) <= standalone:
+        problems.append("behaviour.operating_account_priority must list standalone deposits")
+    if set(b.seasonality) != set(range(1, 13)) or any(v <= 0 for v in b.seasonality.values()):
+        problems.append("behaviour.seasonality needs a positive multiplier for months 1-12")
+    if len(b.hour_weights) != 24 or any(w < 0 for w in b.hour_weights):
+        problems.append("behaviour.hour_weights needs 24 non-negative weights")
+    if not 0 <= b.branch_open_hour < b.branch_close_hour <= 24:
+        problems.append("behaviour.branch_hours: need 0 <= open < close <= 24")
+    if not b.spend_ratio_min <= b.spend_ratio_mean <= b.spend_ratio_max or b.spend_ratio_sd <= 0:
+        problems.append("behaviour.spend_ratio: need min <= mean <= max and sd > 0")
+    for field in ("dormant_share", "savings_sweep_share"):
+        if not 0 <= getattr(b, field) <= 1:
+            problems.append(f"behaviour.{field} must be in [0, 1]")
+    cc = b.credit_card
+    if not 0 <= cc.purchase_share <= 1 or not 0 <= cc.pay_full_share <= 1:
+        problems.append("behaviour.credit_card shares must be in [0, 1]")
+    if not 1 <= cc.repayment_day <= 28 or not 0 < cc.min_payment_pct <= 100:
+        problems.append("behaviour.credit_card: repayment_day 1-28, min_payment_pct in (0, 100]")
+    if not set(b.monthly_fee_ghs) <= standalone:
+        problems.append("behaviour.monthly_fee_ghs keys must be standalone deposit products")
+    if not b.counterparty_banks:
+        problems.append("behaviour.counterparty_banks must not be empty")
+    _check_weights(problems, "behaviour.billers", b.billers)
