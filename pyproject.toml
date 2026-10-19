@@ -1,0 +1,78 @@
+[project]
+name = "isbank"
+version = "0.1.0"
+description = "Shared platform library for the IS Bank data platform on Microsoft Fabric (DQ rules, entity resolution, transformations)."
+readme = "README.md"
+# Matches the Python version of Fabric Spark Runtime 2.0, the runtime the Dev workspace uses.
+requires-python = ">=3.13"
+authors = [{ name = "Manaf" }]
+# Runtime dependencies of the wheel deployed to Fabric. Keep this list minimal:
+# anything Fabric already provides (pyspark, delta) must not be pinned here.
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.11",
+]
+# Local-only dependencies of the synthetic source-system simulator.
+# Data libraries (polars/numpy/...) are added in Phase 1.
+generator = [
+    "pyyaml>=6.0",
+]
+
+[tool.uv]
+default-groups = ["dev", "generator"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Only the platform library is shipped to Fabric. `generator/` simulates the
+# source systems and must stay outside the platform runtime.
+packages = ["src/isbank"]
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "."]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # bugbear
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "SIM", # simplify
+    "PT",  # pytest style
+    "D",   # docstrings
+]
+ignore = [
+    "D100", # module docstrings optional
+    "D104", # package docstrings optional
+    "D105", # magic-method docstrings optional
+    "D107", # __init__ docstrings optional
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The repo root is on the path so local-only `generator` is importable in tests
+# without being packaged into the wheel.
+pythonpath = ["."]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+markers = [
+    "spark: tests that need a local Spark session (slow)",
+]
