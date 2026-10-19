@@ -84,7 +84,7 @@ def test_join_dates_respect_window_and_branch_opening(customers: pd.DataFrame, c
     opened = {b.branch_code: pd.Timestamp(b.opened_on) for b in config.branches}
     assert (customers["joined_on"] >= customers["home_branch_code"].map(opened)).all()
     assert (customers["joined_on"] >= pd.Timestamp(config.customers.earliest_join_date)).all()
-    assert (customers["joined_on"] <= pd.Timestamp(config.today)).all()
+    assert (customers["joined_on"] <= pd.Timestamp(config.end_date)).all()
 
 
 def test_branch_opened_in_window_has_no_earlier_customers(

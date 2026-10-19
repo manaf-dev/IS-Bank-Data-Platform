@@ -168,7 +168,7 @@ def simulate_ledger(
     scenarios: Scenarios,
     rng: np.random.Generator,
 ) -> Ledger:
-    """Simulate all postings from `config.start_date` to `config.today`."""
+    """Simulate all postings from `config.start_date` to `config.end_date` (the horizon)."""
     sim = _Simulation(config, customers, holdings, merchants, profiles, scenarios, rng)
     return sim.run()
 
@@ -191,7 +191,7 @@ class _Simulation:
         self.scenarios = scenarios
         self.profiles_in = profiles
         self.start = np.datetime64(config.start_date, "D")
-        self.today = np.datetime64(config.today, "D")
+        self.end = np.datetime64(config.end_date, "D")
         self.accounts = holdings.accounts
         self._customer_arrays(customers, holdings)
         self._payees_and_devices(scenarios)
@@ -378,10 +378,10 @@ class _Simulation:
         frames = []
         event_offset = 0
         month = self.start.astype("datetime64[M]")
-        last = self.today.astype("datetime64[M]")
+        last = self.end.astype("datetime64[M]")
         while month <= last:
             d0 = month.astype("datetime64[D]")
-            d1 = min((month + np.timedelta64(1, "M")).astype("datetime64[D]") - _DAY, self.today)
+            d1 = min((month + np.timedelta64(1, "M")).astype("datetime64[D]") - _DAY, self.end)
             m_idx = int((month - self.start.astype("datetime64[M]")).astype(int))
             m = self._build_month(d0, d1, int(month.astype(int) % 12) + 1, m_idx)
             frame = self._post_month(m, event_offset)

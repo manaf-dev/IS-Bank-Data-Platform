@@ -70,8 +70,8 @@ class _Builder:
         self.profiles = profiles
         self.n = len(customers)
         self.start = np.datetime64(config.start_date, "D")
-        self.today = np.datetime64(config.today, "D")
-        first, last = self.start.astype("datetime64[M]"), self.today.astype("datetime64[M]")
+        self.end = np.datetime64(config.end_date, "D")
+        first, last = self.start.astype("datetime64[M]"), self.end.astype("datetime64[M]")
         self.months = np.arange(first, last + _MONTH, _MONTH)
         self.income_mult = np.ones((self.n, len(self.months)), dtype="float32")
         self.activity_mult = np.ones((self.n, len(self.months)), dtype="float32")
@@ -84,7 +84,7 @@ class _Builder:
         loan_outcomes = self._defaults()
         fraud_events, rings = self._fraud(beneficiaries, devices)
         complaints = self._complaints(fraud_events)
-        churn, churn_date = self._churn(complaints, loan_outcomes)
+        churn, churn_date = self._churn(complaints, loan_outcomes, devices)
         return Scenarios(
             months=self.months,
             income_mult=self.income_mult,
@@ -125,7 +125,7 @@ class _Builder:
         # Additional devices appear some time after enrolment.
         extra = np.r_[[False], person[1:] == person[:-1]] if person.size else np.array([], bool)
         delay = self.rng.integers(30, 720, size=person.size).astype("timedelta64[D]")
-        first_seen = np.where(extra, np.minimum(first_seen + delay, self.today), first_seen)
+        first_seen = np.where(extra, np.minimum(first_seen + delay, self.end), first_seen)
         return pd.DataFrame(
             {
                 "person_id": person,
@@ -166,9 +166,7 @@ class _Builder:
 
         lo = np.maximum(add_months(opened, np.full(len(loans), d.shock_min_months)), self.start)
         latest = np.maximum(np.ceil(term * d.shock_max_term_share), d.shock_min_months)
-        hi = np.minimum(
-            np.minimum(add_months(opened, latest.astype("int64")), maturity), self.today
-        )
+        hi = np.minimum(np.minimum(add_months(opened, latest.astype("int64")), maturity), self.end)
         in_window = defaults & (lo <= hi)
         span = np.maximum((hi - lo).astype("int64"), 0) + 1
         shock = np.where(
@@ -327,7 +325,7 @@ class _Builder:
 
     def _takeovers(self, next_id) -> tuple[pd.DataFrame, pd.DataFrame]:
         p, rng = self.sig.takeover, self.rng
-        years = (self.today - self.start).astype(int) / 365.25
+        years = (self.end - self.start).astype(int) / 365.25
         # At least one ring, so every world (even the small dev profile) contains the typology.
         n_rings = max(1, rng.poisson(p.rings_per_year_per_10k_customers * self.n / 10_000 * years))
         mb = self.services[self.services["service"] == "mobile_banking"]
@@ -341,7 +339,7 @@ class _Builder:
         rows, rings = [], []
         for _ in range(n_rings):
             sid = next_id()
-            span = (self.today - self.start).astype(int) - p.campaign_days
+            span = (self.end - self.start).astype(int) - p.campaign_days
             begin = self.start + int(rng.integers(0, max(span, 1))) * _DAY
             enrolled = mb["enrolled_on"].to_numpy().astype("datetime64[D]")
             eligible = mb[(enrolled < begin) & (op_opened[mb["person_id"].to_numpy() - 1] < begin)]
@@ -411,10 +409,10 @@ class _Builder:
     def _complaints(self, fraud_events: pd.DataFrame) -> pd.DataFrame:
         c, rng = self.sig.complaints, self.rng
         lo = np.maximum(self.joined, self.start)
-        years = np.maximum((self.today - lo).astype(int), 0) / 365.25
+        years = np.maximum((self.end - lo).astype(int), 0) / 365.25
         counts = rng.poisson(c.per_customer_per_year * years)
         person = np.repeat(np.arange(1, self.n + 1), counts)
-        span = (self.today - lo[person - 1]).astype(int) + 1
+        span = (self.end - lo[person - 1]).astype(int) + 1
         opened = lo[person - 1] + (rng.random(person.size) * span).astype("timedelta64[D]")
         category = rng.choice(
             np.array(list(c.categories), dtype=object),
@@ -434,13 +432,13 @@ class _Builder:
             opened = np.r_[opened, v["ts"].to_numpy().astype("datetime64[D]") + delay]
             category = np.r_[category, np.full(len(v), "fraud_report", dtype=object)]
 
-        opened = np.minimum(opened, self.today)
+        opened = np.minimum(opened, self.end)
         resolved = rng.random(person.size) < c.resolved_share
         days = rng.integers(
             int(c.resolution_days.min), int(c.resolution_days.max) + 1, size=person.size
         )
         resolved_on = opened + days.astype("timedelta64[D]")
-        resolved &= resolved_on <= self.today
+        resolved &= resolved_on <= self.end
         frame = pd.DataFrame(
             {
                 "person_id": person,
@@ -453,7 +451,7 @@ class _Builder:
         frame.insert(0, "complaint_id", np.arange(1, len(frame) + 1, dtype="int64"))
         return frame.astype({"category": "string"})
 
-    def _churn(self, complaints: pd.DataFrame, loans: pd.DataFrame):
+    def _churn(self, complaints: pd.DataFrame, loans: pd.DataFrame, devices: pd.DataFrame):
         ch, rng = self.sig.churn, self.rng
         segment = self.customers["segment"].to_numpy(dtype=object)
         base = np.array([ch.base_monthly_hazard[s] for s in segment])
@@ -474,6 +472,17 @@ class _Builder:
         tied_until[until.index.to_numpy()] = until.to_numpy()
         shocked = loans.loc[loans["shock_date"].notna(), "person_id"].unique() - 1
 
+        # Nobody leaves before their last account opening, enrolment, or new device.
+        last_new = np.full(self.n, np.datetime64("1900-01-01", "D"))
+        for frame, column in (
+            (acc, "opened_on"),
+            (self.services, "enrolled_on"),
+            (devices, "first_seen"),
+        ):
+            latest = frame.groupby("person_id")[column].max()
+            idx = latest.index.to_numpy() - 1
+            last_new[idx] = np.maximum(last_new[idx], latest.to_numpy().astype("datetime64[D]"))
+
         unresolved = complaints[complaints["resolved_on"].isna()]
         churn_date = np.full(self.n, _NAT)
         for m_idx in range(ch.earliest_month, len(self.months)):
@@ -481,6 +490,7 @@ class _Builder:
             alive = np.isnat(churn_date) & (self.joined < d0) & ~dormant
             alive &= np.isnat(tied_until) | (tied_until < d0)
             alive[shocked] = False
+            alive &= last_new < d0
             recent = unresolved["opened_on"].to_numpy().astype("datetime64[D]") < d0
             has_unresolved = np.zeros(self.n, dtype=bool)
             has_unresolved[unresolved.loc[recent, "person_id"].to_numpy() - 1] = True

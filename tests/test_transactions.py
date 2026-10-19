@@ -71,7 +71,7 @@ def test_ids_and_ordering(postings: pd.DataFrame):
 
 def test_postings_inside_window(config: WorldConfig, postings: pd.DataFrame):
     assert postings["posted_at"].min() >= pd.Timestamp(config.start_date)
-    assert postings["posted_at"].max() < pd.Timestamp(config.today) + pd.Timedelta(days=1)
+    assert postings["posted_at"].max() < pd.Timestamp(config.end_date) + pd.Timedelta(days=1)
 
 
 def test_balance_after_reconciles_with_opening_and_postings(ledger: Ledger, posted: pd.DataFrame):

@@ -109,7 +109,7 @@ def test_opening_dates_within_customer_life_and_window(
 ):
     merged = accounts.merge(customers[["person_id", "joined_on"]], on="person_id")
     assert (merged["opened_on"] >= merged["joined_on"]).all()
-    assert (merged["opened_on"] <= pd.Timestamp(config.today)).all()
+    assert (merged["opened_on"] <= pd.Timestamp(config.end_date)).all()
     horizon = pd.Timestamp(config.start_date) - pd.DateOffset(
         months=config.dependent_open_lookback_months
     )

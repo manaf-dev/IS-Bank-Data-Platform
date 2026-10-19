@@ -11,6 +11,9 @@ simulation:
   # school-fees season. After `today`, daily ticks continue from the next day.
   start_date: 2023-01-01
   today: 2025-12-31
+  # The world is simulated up to end_date. Everything after `today` is the "future" that
+  # daily ticks reveal one day at a time, so a tick is deterministic and idempotent.
+  end_date: 2026-12-31
   currency: GHS
 
 # Select with --profile (default: dev). A profile is deep-merged over the base values.
@@ -455,7 +458,7 @@ behaviour:
 signals:
   # Illustrative macro-stress index by quarter (1.0 = high stress, e.g. high inflation in
   # early 2023, easing afterwards). Raises default probability for loans opened then.
-  macro_stress_by_quarter: { 2023Q1: 1.0, 2023Q2: 0.95, 2023Q3: 0.85, 2023Q4: 0.75, 2024Q1: 0.65, 2024Q2: 0.6, 2024Q3: 0.55, 2024Q4: 0.5, 2025Q1: 0.45, 2025Q2: 0.45, 2025Q3: 0.4, 2025Q4: 0.4 }
+  macro_stress_by_quarter: { 2023Q1: 1.0, 2023Q2: 0.95, 2023Q3: 0.85, 2023Q4: 0.75, 2024Q1: 0.65, 2024Q2: 0.6, 2024Q3: 0.55, 2024Q4: 0.5, 2025Q1: 0.45, 2025Q2: 0.45, 2025Q3: 0.4, 2025Q4: 0.4, 2026Q1: 0.4, 2026Q2: 0.35, 2026Q3: 0.35, 2026Q4: 0.35 }
   # Stress applied to loans opened before the window.
   pre_window_macro_stress: 0.8
 
@@ -534,3 +537,14 @@ signals:
       transfers_per_victim: { min: 1, max: 3 }
       transfer_income_multiple: { min: 0.5, max: 2.5 }
       night_share: 0.6
+
+# ---------------------------------------------------------------- attribute changes
+# Changes to customer details after joining: the history SCD2 in Silver must capture.
+customer_changes:
+  # Poisson rate per customer per year of membership.
+  per_customer_per_year: { phone_number: 0.04, digital_address: 0.06, email: 0.05 }
+  # Share of digital-address moves that stay within the home district.
+  local_move_share: 0.8
+  # Women aged 20-40 marrying (and taking a new surname), per year; at most once.
+  marriage_surname_per_year: 0.012
+  marriage_age: { min: 20, max: 40 }

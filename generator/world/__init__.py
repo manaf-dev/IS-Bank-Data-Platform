@@ -8,6 +8,7 @@ import pandas as pd
 from generator.config import WorldConfig
 from generator.world.customers import generate_customers
 from generator.world.holdings import Holdings, generate_holdings
+from generator.world.lifecycle import account_closures, generate_customer_changes
 from generator.world.merchants import generate_merchants
 from generator.world.profiles import generate_profiles
 from generator.world.scenarios import Scenarios, generate_scenarios
@@ -25,6 +26,8 @@ class World:
     profiles: pd.DataFrame
     scenarios: Scenarios
     ledger: Ledger
+    customer_changes: pd.DataFrame
+    account_closures: pd.DataFrame
 
 
 def build_world(config: WorldConfig) -> World:
@@ -40,4 +43,8 @@ def build_world(config: WorldConfig) -> World:
     profiles = generate_profiles(config, customers, holdings, rng)
     scenarios = generate_scenarios(config, customers, holdings, merchants, profiles, rng)
     ledger = simulate_ledger(config, customers, holdings, merchants, profiles, scenarios, rng)
-    return World(config, customers, holdings, merchants, profiles, scenarios, ledger)
+    changes = generate_customer_changes(config, customers, scenarios, rng)
+    closures = account_closures(config, holdings, scenarios, ledger)
+    return World(
+        config, customers, holdings, merchants, profiles, scenarios, ledger, changes, closures
+    )

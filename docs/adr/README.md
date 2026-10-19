@@ -8,3 +8,4 @@ Short records of significant decisions: context, options, decision, consequences
 | [0002](0002-simulation-window-and-reference-data.md) | Simulation window, branches, segments, and products | Proposed |
 | [0003](0003-generator-dataframe-library.md) | pandas and NumPy for the synthetic data generator | Accepted |
 | [0004](0004-source-system-delivery.md) | How simulated source systems deliver data to Fabric | Accepted |
+| [0005](0005-simulation-horizon-and-daily-ticks.md) | Simulation horizon and deterministic daily ticks | Accepted |

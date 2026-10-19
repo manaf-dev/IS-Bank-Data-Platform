@@ -107,7 +107,7 @@ def _sample_join_dates(
 ) -> np.ndarray:
     """Join dates respect each branch's opening date; most customers predate the window."""
     start = np.datetime64(config.start_date, "D")
-    today = np.datetime64(config.today, "D")
+    end = np.datetime64(config.end_date, "D")
     earliest = np.datetime64(config.customers.earliest_join_date, "D")
     opened = np.array([np.datetime64(b.opened_on, "D") for b in config.branches])[branch_idx]
 
@@ -115,7 +115,7 @@ def _sample_join_dates(
         rng.random(len(branch_idx)) < config.customers.pre_window_share
     )
     low = np.where(pre_window, np.maximum(opened, earliest), np.maximum(opened, start))
-    high = np.where(pre_window, start - _ONE_DAY, today)
+    high = np.where(pre_window, start - _ONE_DAY, end)
     return uniform_dates(rng, low, high)
 
 

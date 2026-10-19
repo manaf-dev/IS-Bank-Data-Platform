@@ -73,7 +73,7 @@ def test_complaints_are_well_formed(world: World):
     assert c["complaint_id"].is_unique
     resolved = c.dropna(subset=["resolved_on"])
     assert (resolved["resolved_on"] >= resolved["opened_on"]).all()
-    assert c["opened_on"].max() <= pd.Timestamp(world.config.today)
+    assert c["opened_on"].max() <= pd.Timestamp(world.config.end_date)
     assert 0.5 < c["resolved_on"].notna().mean() < 0.95
 
 

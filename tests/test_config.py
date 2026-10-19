@@ -39,6 +39,7 @@ def test_simulation_window_is_three_full_years():
     config = load_config()
     assert config.start_date == dt.date(2023, 1, 1)
     assert config.today == dt.date(2025, 12, 31)
+    assert config.end_date == dt.date(2026, 12, 31)
     assert config.currency == "GHS"
 
 
@@ -69,6 +70,11 @@ def test_unknown_profile_is_rejected(raw: dict):
         (lambda c: c["products"][1].update(product_code="CA_PER"), "product codes must be unique"),
         (lambda c: c["products"][0].update(family="insurance"), "unknown family"),
         (lambda c: c["simulation"].update(today=dt.date(2022, 1, 1)), "start_date must be before"),
+        (lambda c: c["simulation"].update(today=dt.date(2027, 6, 1)), "must not be after"),
+        (
+            lambda c: c["signals"]["macro_stress_by_quarter"].pop("2026Q4"),
+            "macro_stress_by_quarter",
+        ),
         (lambda c: c["customers"].update(female_share=1.5), "female_share"),
         (lambda c: c["customers"]["mobile_network_share"].update(MTN=0.9), "mobile_network_share"),
         (lambda c: c["customers"]["ethnicity_by_region"].pop("Volta"), "no ethnicity weights"),

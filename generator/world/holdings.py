@@ -45,7 +45,7 @@ def _generate_accounts(
     n = len(customers)
     segment = customers["segment"].to_numpy(dtype=object)
     joined = customers["joined_on"].to_numpy().astype("datetime64[D]")
-    today = np.full(n, np.datetime64(config.today, "D"))
+    end = np.full(n, np.datetime64(config.end_date, "D"))
     income = customers["monthly_income_pesewas"].to_numpy()
 
     standalone = [p for p in config.products if not p.requires_any]
@@ -67,12 +67,12 @@ def _generate_accounts(
     #    any others were opened at a random later date.
     held_matrix = np.column_stack([held[p.product_code] for p in standalone])
     anchor = np.argmax(np.where(held_matrix, rng.random(held_matrix.shape), -1.0), axis=1)
-    later = uniform_dates(rng, joined, today)
+    later = uniform_dates(rng, joined, end)
     for j, p in enumerate(standalone):
         opened[p.product_code] = np.where(
             held[p.product_code], np.where(anchor == j, joined, later), _NAT
         )
-        later = uniform_dates(rng, joined, today)
+        later = uniform_dates(rng, joined, end)
 
     # 3. Cards, loans, and fixed deposits need an account to link to; they link to the
     #    earliest-opened eligible account and open on or after it, and no earlier than the
@@ -93,7 +93,7 @@ def _generate_accounts(
         is_held = has_link & (rng.random(n) < _take_up(p, segment))
         low = np.where(is_held, np.maximum(np.maximum(joined, link_opened), horizon), joined)
         held[p.product_code] = is_held
-        opened[p.product_code] = np.where(is_held, uniform_dates(rng, low, today), _NAT)
+        opened[p.product_code] = np.where(is_held, uniform_dates(rng, low, end), _NAT)
         linked_to[p.product_code] = np.where(
             is_held, np.array(p.requires_any, dtype=object)[first], None
         )
@@ -197,7 +197,7 @@ def _generate_services(
         .to_numpy(dtype=float)
     )
     joined = customers["joined_on"].to_numpy().astype("datetime64[D]")
-    today = np.full(n, np.datetime64(config.today, "D"))
+    end = np.full(n, np.datetime64(config.end_date, "D"))
     phones = customers["phone_number"].to_numpy(dtype=object)
 
     frames = []
@@ -212,7 +212,7 @@ def _generate_services(
                 {
                     "person_id": customers["person_id"].to_numpy()[idx],
                     "service": service,
-                    "enrolled_on": uniform_dates(rng, joined[idx], today[idx]).astype(
+                    "enrolled_on": uniform_dates(rng, joined[idx], end[idx]).astype(
                         "datetime64[s]"
                     ),
                     "wallet_number": wallet,

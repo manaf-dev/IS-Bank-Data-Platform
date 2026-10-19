@@ -278,6 +278,16 @@ class SignalParams:
 
 
 @dataclass(frozen=True)
+class ChangeParams:
+    """How often customers change details after joining."""
+
+    per_customer_per_year: dict[str, float]
+    local_move_share: float
+    marriage_surname_per_year: float
+    marriage_age: Range
+
+
+@dataclass(frozen=True)
 class WorldConfig:
     """The fully resolved, validated generator config for one profile."""
 
@@ -285,6 +295,7 @@ class WorldConfig:
     seed: int
     start_date: dt.date
     today: dt.date
+    end_date: dt.date
     currency: str
     branches: tuple[Branch, ...]
     segment_mix: dict[str, float]
@@ -298,6 +309,7 @@ class WorldConfig:
     merchants: MerchantParams
     behaviour: BehaviourParams
     signals: SignalParams
+    customer_changes: ChangeParams
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH, profile: str = "dev") -> WorldConfig:
@@ -336,6 +348,8 @@ def validate(config: WorldConfig) -> list[str]:
 
     if config.start_date >= config.today:
         problems.append("simulation.start_date must be before simulation.today")
+    if config.today > config.end_date:
+        problems.append("simulation.today must not be after simulation.end_date")
 
     codes = [b.branch_code for b in config.branches]
     if len(set(codes)) != len(codes):
@@ -351,7 +365,7 @@ def validate(config: WorldConfig) -> list[str]:
     _check_mix(problems, "segments.mix", config.segment_mix, segments)
     for b in config.branches:
         if b.opened_on > config.today:
-            problems.append(f"{b.branch_code}: opened_on is after simulation.today")
+            problems.append(f"{b.branch_code}: opened_on is after simulation.today")  # backfill
         if b.region not in cust.ethnicity_by_region:
             problems.append(f"{b.branch_code}: no ethnicity weights for region {b.region!r}")
         if b.segment_mix is not None:
@@ -399,6 +413,15 @@ def validate(config: WorldConfig) -> list[str]:
     _check_merchants(problems, config.merchants)
     _check_behaviour(problems, config, segments)
     _check_signals(problems, config, segments)
+    ch = config.customer_changes
+    if not set(ch.per_customer_per_year) <= {"phone_number", "digital_address", "email"}:
+        problems.append("customer_changes.per_customer_per_year: unknown fields")
+    if any(r < 0 for r in ch.per_customer_per_year.values()) or ch.marriage_surname_per_year < 0:
+        problems.append("customer_changes: rates must be non-negative")
+    if not 0 <= ch.local_move_share <= 1:
+        problems.append("customer_changes.local_move_share must be in [0, 1]")
+    if not 0 <= ch.marriage_age.min <= ch.marriage_age.max:
+        problems.append("customer_changes.marriage_age: need 0 <= min <= max")
     if cust.count <= 0:
         problems.append("customers.count must be positive")
     for field in ("pre_window_share", "female_share", "email_digit_suffix_share"):
@@ -447,6 +470,7 @@ def _build(raw: dict[str, Any], profile: str) -> WorldConfig:
         seed=int(raw["seed"]),
         start_date=sim["start_date"],
         today=sim["today"],
+        end_date=sim["end_date"],
         currency=sim["currency"],
         branches=tuple(
             Branch(
@@ -516,6 +540,14 @@ def _build(raw: dict[str, Any], profile: str) -> WorldConfig:
         merchants=_build_merchants(raw["merchants"]),
         behaviour=_build_behaviour(raw["behaviour"]),
         signals=_build_signals(raw["signals"]),
+        customer_changes=ChangeParams(
+            per_customer_per_year={
+                k: float(v) for k, v in raw["customer_changes"]["per_customer_per_year"].items()
+            },
+            local_move_share=float(raw["customer_changes"]["local_move_share"]),
+            marriage_surname_per_year=float(raw["customer_changes"]["marriage_surname_per_year"]),
+            marriage_age=_range(raw["customer_changes"]["marriage_age"]),
+        ),
     )
 
 
@@ -812,7 +844,7 @@ def _check_behaviour(problems: list[str], config: WorldConfig, segments: set[str
 
 def _check_signals(problems: list[str], config: WorldConfig, segments: set[str]) -> None:
     sig = config.signals
-    expected_quarters = _quarters(config.start_date, config.today)
+    expected_quarters = _quarters(config.start_date, config.end_date)
     if set(sig.macro_stress_by_quarter) != expected_quarters:
         problems.append(f"signals.macro_stress_by_quarter must cover {sorted(expected_quarters)}")
     ranges = {
