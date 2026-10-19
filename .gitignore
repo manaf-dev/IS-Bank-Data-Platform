@@ -218,3 +218,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ------------------------------------------------------------------
+# IS Bank data platform
+# ------------------------------------------------------------------
+# Generated synthetic data is reproducible from config + seed: never commit it.
+data/
+output/
+answer_key/
+*.parquet
+*.csv
+*.jsonl
+*.ndjson
+*.avro
+*.xlsx
+# ...except small hand-written test fixtures.
+!tests/fixtures/**
+
+# Local Spark / Delta / MLflow artefacts
+spark-warehouse/
+metastore_db/
+derby.log
+mlruns/
+mlartifacts/
+
+# Claude Code local settings
+.claude/settings.local.json

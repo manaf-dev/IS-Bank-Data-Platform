@@ -1,0 +1,19 @@
+# Single source of truth for every generator rate, fraction, noise level, and date window.
+# Nothing in generator code may hardcode these values.
+#
+# Values marked TODO are open questions in CLAUDE.md section 12: decide them, record
+# the decision in an ADR, then fill them in.
+
+seed: 20261019
+
+simulation:
+  start_date: null   # TODO: simulated history window (target about 3 years)
+  today: null        # TODO: simulated "today" date
+  currency: GHS
+
+# Select with --profile (default: dev). Profiles override the base values above.
+profiles:
+  dev:
+    customers: 2000
+  full:
+    customers: 50000
