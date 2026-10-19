@@ -10,23 +10,13 @@ import pandas as pd
 import pytest
 
 from generator.config import WorldConfig, load_config
-from generator.world.customers import generate_customers
-from generator.world.holdings import generate_holdings
-from generator.world.merchants import generate_merchants
-from generator.world.transactions import Ledger, simulate_ledger
+from generator.world import build_world
+from generator.world.transactions import Ledger
 
 
 def build(config: WorldConfig):
-    rng = np.random.default_rng(config.seed)
-    customers = generate_customers(config, rng)
-    holdings = generate_holdings(config, customers, rng)
-    merchants = generate_merchants(config, rng)
-    return (
-        customers,
-        holdings,
-        merchants,
-        simulate_ledger(config, customers, holdings, merchants, rng),
-    )
+    w = build_world(config)
+    return w.customers, w.holdings, w.merchants, w.ledger
 
 
 @pytest.fixture(scope="module")

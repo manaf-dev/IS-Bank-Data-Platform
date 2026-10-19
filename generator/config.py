@@ -174,6 +174,110 @@ class BehaviourParams:
 
 
 @dataclass(frozen=True)
+class Range:
+    """An inclusive numeric range drawn from uniformly."""
+
+    min: float
+    max: float
+
+
+@dataclass(frozen=True)
+class DefaultParams:
+    """Logistic model for a loan's true probability of default, and the shock it causes."""
+
+    intercept: float
+    dti: float
+    stress: float
+    log_income: float
+    segment_effect: dict[str, float]
+    noise_sd: float
+    shock_income_share: Range
+    shock_spend_share: float
+    shock_balance_drain_share: float
+    shock_min_months: int
+    shock_max_term_share: float
+
+
+@dataclass(frozen=True)
+class ComplaintParams:
+    """How often customers complain, about what, and how complaints are resolved."""
+
+    per_customer_per_year: float
+    categories: dict[str, float]
+    resolved_share: float
+    resolution_days: Range
+    fraud_report_share: float
+
+
+@dataclass(frozen=True)
+class ChurnParams:
+    """Monthly churn hazard and the observable run-down before a customer leaves."""
+
+    base_monthly_hazard: dict[str, float]
+    unresolved_complaint: float
+    low_activity: float
+    low_activity_threshold: float
+    noise_sd: float
+    ramp_months: Range
+    ramp_floor: float
+    closing_transfer_share: float
+    earliest_month: int
+
+
+@dataclass(frozen=True)
+class CardTestingParams:
+    """Card testing: many tiny online probes, then a cash-out purchase."""
+
+    monthly_victims_per_1000_cards: float
+    probes: Range
+    probe_amount_ghs: Range
+    probe_window_minutes: int
+    cashout_income_multiple: Range
+
+
+@dataclass(frozen=True)
+class GeoJumpParams:
+    """Night-time card purchases in a city far from the cardholder's home."""
+
+    monthly_victims_per_1000_cards: float
+    purchases: Range
+    hours: tuple[int, ...]
+    amount_income_multiple: Range
+
+
+@dataclass(frozen=True)
+class TakeoverParams:
+    """Account-takeover rings sharing beneficiary accounts and devices."""
+
+    rings_per_year_per_10k_customers: float
+    victims: Range
+    beneficiaries: Range
+    devices: Range
+    campaign_days: int
+    transfers_per_victim: Range
+    transfer_income_multiple: Range
+    night_share: float
+
+
+@dataclass(frozen=True)
+class SignalParams:
+    """Planted signals: default, complaints, churn, fraud, and the noise around them."""
+
+    macro_stress_by_quarter: dict[str, float]
+    pre_window_macro_stress: float
+    default: DefaultParams
+    complaints: ComplaintParams
+    churn: ChurnParams
+    beneficiaries_per_customer: Range
+    new_beneficiary_share: float
+    device_count_weights: dict[int, float]
+    legit_night_purchase_share: float
+    card_testing: CardTestingParams
+    geo_jump: GeoJumpParams
+    takeover: TakeoverParams
+
+
+@dataclass(frozen=True)
 class WorldConfig:
     """The fully resolved, validated generator config for one profile."""
 
@@ -193,6 +297,7 @@ class WorldConfig:
     dependent_open_lookback_months: int
     merchants: MerchantParams
     behaviour: BehaviourParams
+    signals: SignalParams
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH, profile: str = "dev") -> WorldConfig:
@@ -293,6 +398,7 @@ def validate(config: WorldConfig) -> list[str]:
         problems.append("holdings.dependent_open_lookback_months must be non-negative")
     _check_merchants(problems, config.merchants)
     _check_behaviour(problems, config, segments)
+    _check_signals(problems, config, segments)
     if cust.count <= 0:
         problems.append("customers.count must be positive")
     for field in ("pre_window_share", "female_share", "email_digit_suffix_share"):
@@ -409,6 +515,82 @@ def _build(raw: dict[str, Any], profile: str) -> WorldConfig:
         dependent_open_lookback_months=int(raw["holdings"]["dependent_open_lookback_months"]),
         merchants=_build_merchants(raw["merchants"]),
         behaviour=_build_behaviour(raw["behaviour"]),
+        signals=_build_signals(raw["signals"]),
+    )
+
+
+def _range(raw: dict[str, Any]) -> Range:
+    return Range(min=float(raw["min"]), max=float(raw["max"]))
+
+
+def _build_signals(raw: dict[str, Any]) -> SignalParams:
+    d, c, ch, f = raw["default"], raw["complaints"], raw["churn"], raw["fraud"]
+    ct, gj, ato = f["card_testing"], f["night_geo_jump"], f["account_takeover"]
+    return SignalParams(
+        macro_stress_by_quarter={
+            str(k): float(v) for k, v in raw["macro_stress_by_quarter"].items()
+        },
+        pre_window_macro_stress=float(raw["pre_window_macro_stress"]),
+        default=DefaultParams(
+            intercept=float(d["intercept"]),
+            dti=float(d["dti"]),
+            stress=float(d["stress"]),
+            log_income=float(d["log_income"]),
+            segment_effect={k: float(v) for k, v in d["segment_effect"].items()},
+            noise_sd=float(d["noise_sd"]),
+            shock_income_share=_range(d["shock_income_share"]),
+            shock_spend_share=float(d["shock_spend_share"]),
+            shock_balance_drain_share=float(d["shock_balance_drain_share"]),
+            shock_min_months=int(d["shock_min_months"]),
+            shock_max_term_share=float(d["shock_max_term_share"]),
+        ),
+        complaints=ComplaintParams(
+            per_customer_per_year=float(c["per_customer_per_year"]),
+            categories={k: float(v) for k, v in c["categories"].items()},
+            resolved_share=float(c["resolved_share"]),
+            resolution_days=_range(c["resolution_days"]),
+            fraud_report_share=float(c["fraud_report_share"]),
+        ),
+        churn=ChurnParams(
+            base_monthly_hazard={k: float(v) for k, v in ch["base_monthly_hazard"].items()},
+            unresolved_complaint=float(ch["unresolved_complaint"]),
+            low_activity=float(ch["low_activity"]),
+            low_activity_threshold=float(ch["low_activity_threshold"]),
+            noise_sd=float(ch["noise_sd"]),
+            ramp_months=_range(ch["ramp_months"]),
+            ramp_floor=float(ch["ramp_floor"]),
+            closing_transfer_share=float(ch["closing_transfer_share"]),
+            earliest_month=int(ch["earliest_month"]),
+        ),
+        beneficiaries_per_customer=_range(raw["beneficiaries"]["per_customer"]),
+        new_beneficiary_share=float(raw["beneficiaries"]["new_beneficiary_share"]),
+        device_count_weights={
+            int(k): float(v) for k, v in raw["devices"]["per_customer_weights"].items()
+        },
+        legit_night_purchase_share=float(raw["legit_night_purchase_share"]),
+        card_testing=CardTestingParams(
+            monthly_victims_per_1000_cards=float(ct["monthly_victims_per_1000_cards"]),
+            probes=_range(ct["probes"]),
+            probe_amount_ghs=_range(ct["probe_amount_ghs"]),
+            probe_window_minutes=int(ct["probe_window_minutes"]),
+            cashout_income_multiple=_range(ct["cashout_income_multiple"]),
+        ),
+        geo_jump=GeoJumpParams(
+            monthly_victims_per_1000_cards=float(gj["monthly_victims_per_1000_cards"]),
+            purchases=_range(gj["purchases"]),
+            hours=tuple(int(h) for h in gj["hours"]),
+            amount_income_multiple=_range(gj["amount_income_multiple"]),
+        ),
+        takeover=TakeoverParams(
+            rings_per_year_per_10k_customers=float(ato["rings_per_year_per_10k_customers"]),
+            victims=_range(ato["victims"]),
+            beneficiaries=_range(ato["beneficiaries"]),
+            devices=_range(ato["devices"]),
+            campaign_days=int(ato["campaign_days"]),
+            transfers_per_victim=_range(ato["transfers_per_victim"]),
+            transfer_income_multiple=_range(ato["transfer_income_multiple"]),
+            night_share=float(ato["night_share"]),
+        ),
     )
 
 
@@ -626,3 +808,71 @@ def _check_behaviour(problems: list[str], config: WorldConfig, segments: set[str
     if not b.counterparty_banks:
         problems.append("behaviour.counterparty_banks must not be empty")
     _check_weights(problems, "behaviour.billers", b.billers)
+
+
+def _check_signals(problems: list[str], config: WorldConfig, segments: set[str]) -> None:
+    sig = config.signals
+    expected_quarters = _quarters(config.start_date, config.today)
+    if set(sig.macro_stress_by_quarter) != expected_quarters:
+        problems.append(f"signals.macro_stress_by_quarter must cover {sorted(expected_quarters)}")
+    ranges = {
+        "default.shock_income_share": sig.default.shock_income_share,
+        "complaints.resolution_days": sig.complaints.resolution_days,
+        "churn.ramp_months": sig.churn.ramp_months,
+        "beneficiaries.per_customer": sig.beneficiaries_per_customer,
+        "fraud.card_testing.probes": sig.card_testing.probes,
+        "fraud.card_testing.probe_amount_ghs": sig.card_testing.probe_amount_ghs,
+        "fraud.card_testing.cashout_income_multiple": sig.card_testing.cashout_income_multiple,
+        "fraud.night_geo_jump.purchases": sig.geo_jump.purchases,
+        "fraud.night_geo_jump.amount_income_multiple": sig.geo_jump.amount_income_multiple,
+        "fraud.account_takeover.victims": sig.takeover.victims,
+        "fraud.account_takeover.beneficiaries": sig.takeover.beneficiaries,
+        "fraud.account_takeover.devices": sig.takeover.devices,
+        "fraud.account_takeover.transfers_per_victim": sig.takeover.transfers_per_victim,
+        "fraud.account_takeover.transfer_income_multiple": sig.takeover.transfer_income_multiple,
+    }
+    for label, r in ranges.items():
+        if not 0 <= r.min <= r.max:
+            problems.append(f"signals.{label}: need 0 <= min <= max")
+    for label, mapping in (
+        ("default.segment_effect", sig.default.segment_effect),
+        ("churn.base_monthly_hazard", sig.churn.base_monthly_hazard),
+    ):
+        if set(mapping) != segments:
+            problems.append(f"signals.{label} must cover every segment")
+    if any(not 0 <= h < 1 for h in sig.churn.base_monthly_hazard.values()):
+        problems.append("signals.churn.base_monthly_hazard values must be in [0, 1)")
+    shares = {
+        "default.shock_spend_share": sig.default.shock_spend_share,
+        "default.shock_max_term_share": sig.default.shock_max_term_share,
+        "default.shock_balance_drain_share": sig.default.shock_balance_drain_share,
+        "complaints.resolved_share": sig.complaints.resolved_share,
+        "complaints.fraud_report_share": sig.complaints.fraud_report_share,
+        "churn.ramp_floor": sig.churn.ramp_floor,
+        "churn.closing_transfer_share": sig.churn.closing_transfer_share,
+        "legit_night_purchase_share": sig.legit_night_purchase_share,
+        "beneficiaries.new_beneficiary_share": sig.new_beneficiary_share,
+        "fraud.account_takeover.night_share": sig.takeover.night_share,
+    }
+    for label, value in shares.items():
+        if not 0 <= value <= 1:
+            problems.append(f"signals.{label} must be in [0, 1]")
+    _check_weights(problems, "signals.complaints.categories", sig.complaints.categories)
+    _check_weights(
+        problems,
+        "signals.devices.per_customer_weights",
+        {str(k): v for k, v in sig.device_count_weights.items()},
+    )
+    if any(not 0 <= h <= 23 for h in sig.geo_jump.hours) or not sig.geo_jump.hours:
+        problems.append("signals.fraud.night_geo_jump.hours must be hours 0-23")
+    if sig.churn.earliest_month < 0 or sig.default.shock_min_months < 1:
+        problems.append("signals: churn.earliest_month >= 0 and default.shock_min_months >= 1")
+
+
+def _quarters(start: dt.date, end: dt.date) -> set[str]:
+    quarters = set()
+    year, quarter = start.year, (start.month - 1) // 3 + 1
+    while (year, quarter) <= (end.year, (end.month - 1) // 3 + 1):
+        quarters.add(f"{year}Q{quarter}")
+        year, quarter = (year + 1, 1) if quarter == 4 else (year, quarter + 1)
+    return quarters

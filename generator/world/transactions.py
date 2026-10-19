@@ -7,8 +7,9 @@ would take an account below its floor (zero for deposits, minus the limit for cr
 cards) is DECLINED instead of posted; a declined transfer also cancels its credit leg.
 Balances carry over to the next month.
 
-Behaviour that later slices modulate (churn, default stress, fraud) hooks in through the
-per-customer profile and the monthly income/activity multipliers.
+Planted signals come from `Scenarios`: monthly income and activity multipliers (default
+shocks, churn run-down), churn dates with a closing transfer, and labelled fraud events,
+which are posted like any other debit and may themselves be declined.
 """
 
 from dataclasses import dataclass, field
@@ -19,6 +20,7 @@ import pandas as pd
 from generator.config import WorldConfig
 from generator.world.holdings import Holdings
 from generator.world.sampling import add_months
+from generator.world.scenarios import FRAUD_TYPES, Scenarios, _account_numbers
 
 # Transaction types and channels are stored as small integer codes while simulating.
 TXN_TYPES = (
@@ -60,6 +62,8 @@ _NAT = np.datetime64("NaT", "D")
 _NO_FLOOR = np.iinfo("int64").min // 4
 _DAY = np.timedelta64(1, "D")
 _MAX_DECLINE_ROUNDS = 10_000
+_FRAUD = {name: i + 1 for i, name in enumerate(FRAUD_TYPES)}
+_FAR_FUTURE = np.datetime64("2262-01-01", "D")
 
 
 @dataclass(frozen=True)
@@ -92,6 +96,10 @@ class _Month:
                 "channel",
                 "merchant",
                 "counterparty",
+                "counterparty_account",
+                "device",
+                "fraud",
+                "scenario",
                 "declinable",
                 "event",
             )
@@ -111,6 +119,10 @@ class _Month:
         event: np.ndarray | None = None,
         merchant: np.ndarray | None = None,
         counterparty: np.ndarray | None = None,
+        counterparty_account: np.ndarray | None = None,
+        device: np.ndarray | None = None,
+        fraud: np.ndarray | None = None,
+        scenario: np.ndarray | None = None,
     ) -> np.ndarray:
         """Append postings; returns the event keys used (pass them to the second leg)."""
         n = len(account)
@@ -132,6 +144,13 @@ class _Month:
         c["counterparty"].append(
             counterparty if counterparty is not None else np.full(n, None, dtype=object)
         )
+        none = np.full(n, None, dtype=object)
+        c["counterparty_account"].append(
+            none if counterparty_account is None else counterparty_account
+        )
+        c["device"].append(none if device is None else device)
+        c["fraud"].append(np.zeros(n, "int8") if fraud is None else fraud.astype("int8"))
+        c["scenario"].append(np.zeros(n, "int64") if scenario is None else scenario.astype("int64"))
         c["declinable"].append(np.full(n, declinable))
         c["event"].append(event)
         return event
@@ -145,10 +164,12 @@ def simulate_ledger(
     customers: pd.DataFrame,
     holdings: Holdings,
     merchants: pd.DataFrame,
+    profiles: pd.DataFrame,
+    scenarios: Scenarios,
     rng: np.random.Generator,
 ) -> Ledger:
     """Simulate all postings from `config.start_date` to `config.today`."""
-    sim = _Simulation(config, customers, holdings, merchants, rng)
+    sim = _Simulation(config, customers, holdings, merchants, profiles, scenarios, rng)
     return sim.run()
 
 
@@ -159,15 +180,21 @@ class _Simulation:
         customers: pd.DataFrame,
         holdings: Holdings,
         merchants: pd.DataFrame,
+        profiles: pd.DataFrame,
+        scenarios: Scenarios,
         rng: np.random.Generator,
     ) -> None:
         self.config = config
         self.b = config.behaviour
+        self.sig = config.signals
         self.rng = rng
+        self.scenarios = scenarios
+        self.profiles_in = profiles
         self.start = np.datetime64(config.start_date, "D")
         self.today = np.datetime64(config.today, "D")
         self.accounts = holdings.accounts
         self._customer_arrays(customers, holdings)
+        self._payees_and_devices(scenarios)
         self._account_arrays()
         self._merchant_pools(merchants)
         self.carry = self._opening_balances()
@@ -176,7 +203,7 @@ class _Simulation:
     # ------------------------------------------------------------------ setup
 
     def _customer_arrays(self, customers: pd.DataFrame, holdings: Holdings) -> None:
-        b, rng = self.b, self.rng
+        b = self.b
         n = len(customers)
         acc = self.accounts
         self.n = n
@@ -232,21 +259,34 @@ class _Simulation:
         self.momo_from[mm_idx] = mm["enrolled_on"].to_numpy()
         self.wallet[mm_idx] = mm["wallet_number"].to_numpy(dtype=object)
 
-        # Behavioural profile.
-        self.activity = np.exp(
-            np.log(b.activity_median) + b.activity_sigma * rng.standard_normal(n)
-        )
-        has_credit = acc[acc["family"].isin(["loan"]) | (acc["product_code"] == "CC_CLASSIC")]
-        borrower = np.isin(self.person, has_credit["person_id"].to_numpy())
-        self.dormant = (rng.random(n) < b.dormant_share) & ~borrower
-        self.activity[self.dormant] *= b.dormant_multiplier
-        ratio = rng.normal(b.spend_ratio_mean, b.spend_ratio_sd, size=n)
-        self.spend_ratio = np.clip(ratio, b.spend_ratio_min, b.spend_ratio_max)
-        self.salary_day = np.zeros(n, dtype="int64")
-        for seg, (lo, hi) in b.salary_day.items():
-            idx = np.flatnonzero(self.segment == seg)
-            self.salary_day[idx] = rng.integers(lo, hi + 1, size=idx.size)
+        # Behavioural profile (shared with the scenario generator).
+        prof = self.profiles_in
+        if not np.array_equal(prof["person_id"].to_numpy(), self.person):
+            raise ValueError("profiles must be aligned with customers")
+        self.activity = prof["activity"].to_numpy(dtype=float)
+        self.dormant = prof["dormant"].to_numpy(dtype=bool)
+        self.spend_ratio = prof["spend_ratio"].to_numpy(dtype=float)
+        self.salary_day = prof["salary_day"].to_numpy(dtype="int64")
         self.salaried = self.salary_day > 0
+        churn = self.scenarios.churn_date
+        self.churn_date = np.where(np.isnat(churn), _FAR_FUTURE, churn)
+        shocks = self.scenarios.loan_outcomes.dropna(subset=["shock_date"])
+        first_shock = shocks.groupby("person_id")["shock_date"].min()
+        self.shock_date = np.full(n, _NAT)
+        self.shock_date[first_shock.index.to_numpy() - 1] = first_shock.to_numpy().astype(
+            "datetime64[D]"
+        )
+
+    def _payees_and_devices(self, scenarios: Scenarios) -> None:
+        """Index each customer's regular payees and devices for vectorised picking."""
+        ben = scenarios.beneficiaries
+        self.payee = ben["beneficiary_account"].to_numpy(dtype=object)
+        self.payee_bank = ben["bank"].to_numpy(dtype=object)
+        self.payee_start, self.payee_count = _offsets(ben["person_id"].to_numpy(), self.n)
+        self.payee_bank_of = dict(zip(self.payee, self.payee_bank, strict=True))
+        dev = scenarios.devices
+        self.device = dev["device_id"].to_numpy(dtype=object)
+        self.device_start, self.device_count = _offsets(dev["person_id"].to_numpy(), self.n)
 
     def _account_arrays(self) -> None:
         acc = self.accounts
@@ -342,7 +382,8 @@ class _Simulation:
         while month <= last:
             d0 = month.astype("datetime64[D]")
             d1 = min((month + np.timedelta64(1, "M")).astype("datetime64[D]") - _DAY, self.today)
-            m = self._build_month(d0, d1, int(month.astype(int) % 12) + 1)
+            m_idx = int((month - self.start.astype("datetime64[M]")).astype(int))
+            m = self._build_month(d0, d1, int(month.astype(int) % 12) + 1, m_idx)
             frame = self._post_month(m, event_offset)
             event_offset += m.next_event
             frames.append(frame)
@@ -373,13 +414,92 @@ class _Simulation:
             }
         )
 
+    def _fraud_month(self, m: _Month, d0, d1) -> None:
+        """Post this month's labelled fraud events as ordinary (declinable) debits."""
+        fe = self.scenarios.fraud_events
+        if fe.empty:
+            return
+        day = fe["ts"].to_numpy().astype("datetime64[D]")
+        rows = fe[
+            (day >= d0) & (day <= d1) & (day < self.churn_date[fe["person_id"].to_numpy() - 1])
+        ]
+        for (txn, channel), g in rows.groupby(["txn_type", "channel"], sort=True):
+            merchant = g["merchant_id"].to_numpy(dtype=float)
+            m.add(
+                g["account_id"].to_numpy(),
+                g["person_id"].to_numpy(),
+                g["ts"].to_numpy(),
+                g["amount_pesewas"].to_numpy(),
+                txn,
+                channel,
+                True,
+                merchant=np.where(np.isnan(merchant), -1, merchant).astype("int64"),
+                counterparty=g["counterparty"].to_numpy(dtype=object),
+                counterparty_account=g["counterparty_account"].to_numpy(dtype=object),
+                device=g["device_id"].to_numpy(dtype=object),
+                fraud=g["fraud_type"].map(_FRAUD).to_numpy(),
+                scenario=g["scenario_id"].to_numpy(),
+            )
+
+    def _shock_outflows(self, m: _Month, d0, d1) -> None:
+        """A default shock takes a large share of the operating balance in one outflow."""
+        idx = np.flatnonzero((self.shock_date >= d0) & (self.shock_date <= d1))
+        if idx.size == 0:
+            return
+        share = self.sig.default.shock_balance_drain_share
+        amount = np.floor(np.maximum(self.carry[self.op_acc[idx] - 1], 0) * share)
+        keep = amount > 0
+        idx, amount = idx[keep], amount[keep]
+        ts = self.shock_date[idx].astype("datetime64[s]") + self._seconds(idx.size, 9, 16)
+        m.add(
+            self.op_acc[idx],
+            self.person[idx],
+            ts,
+            -amount,
+            "CASH_WITHDRAWAL",
+            "BRANCH",
+            True,
+        )
+
+    def _closing_transfers(self, m: _Month, d0, d1) -> None:
+        """Churners move their money to another bank on the day they leave."""
+        idx = np.flatnonzero((self.churn_date >= d0) & (self.churn_date <= d1))
+        if idx.size == 0:
+            return
+        share = self.sig.churn.closing_transfer_share
+        bank = self.rng.choice(np.array(self.b.counterparty_banks, dtype=object), size=idx.size)
+        new_account = _account_numbers(self.rng, idx.size)
+        ts = self.churn_date[idx].astype("datetime64[s]") + self._seconds(idx.size, 10, 16)
+        for acc in (self.op_acc[idx], np.where(self.sav_acc[idx] > 0, self.sav_acc[idx], -1)):
+            has = acc > 0
+            amount = np.floor(np.maximum(self.carry[acc[has] - 1], 0) * share)
+            keep = amount > 0
+            sel = np.flatnonzero(has)[keep]
+            m.add(
+                acc[sel],
+                self.person[idx[sel]],
+                ts[sel],
+                -amount[keep],
+                "TRANSFER_OUT",
+                "BRANCH",
+                True,
+                counterparty=bank[sel],
+                counterparty_account=new_account[sel],
+            )
+
     # ------------------------------------------------------------------ month
 
-    def _build_month(self, d0: np.datetime64, d1: np.datetime64, month_no: int) -> _Month:
+    def _build_month(
+        self, d0: np.datetime64, d1: np.datetime64, month_no: int, m_idx: int
+    ) -> _Month:
         m = _Month()
         n_days = int((d1 - d0).astype(int)) + 1
         season = self.b.seasonality[month_no]
-        active = (self.joined <= d1) & (self.op_from <= d1)
+        self.inc = self.scenarios.income_mult[:, m_idx].astype(float)
+        self.act = self.scenarios.activity_mult[:, m_idx].astype(float)
+        # Last day offset (exclusive) each customer can transact this month.
+        self.hi = np.clip((self.churn_date - d0).astype("int64"), 0, n_days)
+        active = (self.joined <= d1) & (self.op_from <= d1) & (self.churn_date > d0)
         earning = active & ~self.dormant
 
         self._salaries(m, d0, n_days, earning)
@@ -389,16 +509,26 @@ class _Simulation:
         sweep = self._savings_sweep(m, d1, earning)
         self._card_repayments(m, d0, n_days)
         self._spending(m, d0, n_days, active, season, emi_due, sweep)
+        self._fraud_month(m, d0, d1)
+        self._shock_outflows(m, d0, d1)
+        self._closing_transfers(m, d0, d1)
         self._fees(m, d1)
         return m
 
     def _salaries(self, m: _Month, d0, n_days: int, earning: np.ndarray) -> None:
         pay_day = d0 + (np.minimum(self.salary_day, n_days) - 1).astype("timedelta64[D]")
         idx = np.flatnonzero(
-            earning & self.salaried & (pay_day >= self.op_from) & (pay_day >= self.joined)
+            earning
+            & self.salaried
+            & (pay_day >= self.op_from)
+            & (pay_day >= self.joined)
+            & (pay_day < self.churn_date)
+            & (self.inc > 0)
         )
-        amount = self.income[idx] * (
-            1 + self.b.income_noise_sd * self.rng.standard_normal(idx.size)
+        amount = (
+            self.income[idx]
+            * self.inc[idx]
+            * (1 + self.b.income_noise_sd * self.rng.standard_normal(idx.size))
         )
         ts = pay_day[idx].astype("datetime64[s]") + self._seconds(idx.size, 1, 6)
         m.add(
@@ -417,13 +547,15 @@ class _Simulation:
     ) -> None:
         rng = self.rng
         for seg, flow in self.b.irregular_inflows.items():
-            people = np.flatnonzero(earning & (self.segment == seg))
+            people = np.flatnonzero(earning & (self.segment == seg) & (self.inc > 0))
+            people = people[self.hi[people] > self._lo_day(people, d0)]
             counts = rng.poisson(flow.events, size=people.size)
             idx = np.repeat(people, counts)
             if idx.size == 0:
                 continue
             total = (
                 self.income[people]
+                * self.inc[people]
                 * season
                 * (1 + self.b.income_noise_sd * rng.standard_normal(people.size))
             )
@@ -435,17 +567,20 @@ class _Simulation:
             for kind in np.unique(kinds):
                 sel = kinds == kind
                 txn, channel = _FLOW[kind]
-                ts = self._times(d0, n_days, lo[sel], branch=channel == "BRANCH")
-                cp = self._counterparty(kind, idx[sel])
+                who = idx[sel]
+                ts = self._times(d0, n_days, lo[sel], self.hi[who], branch=channel == "BRANCH")
+                cp = self._counterparty(kind, who)
                 m.add(
-                    self.op_acc[idx[sel]],
-                    self.person[idx[sel]],
+                    self.op_acc[who],
+                    self.person[who],
                     ts,
                     np.round(amount[sel]),
                     txn,
                     channel,
                     False,
                     counterparty=cp,
+                    counterparty_account=self._counterparty_account(kind, who),
+                    device=self._devices(who) if channel == "MOBILE" else None,
                 )
 
     def _spending(
@@ -459,11 +594,14 @@ class _Simulation:
         sweep: np.ndarray,
     ) -> None:
         rng, b = self.rng, self.b
-        expected = self.income * season
+        # Spending follows activity when income collapses (a shocked borrower keeps living
+        # off savings), so the balance buffer drains and repayments start to fail.
+        expected = self.income * np.maximum(self.inc, self.act) * season
         budget = np.maximum(self.spend_ratio * expected - emi_due - sweep, 0)
         for seg, flow in b.spending.items():
             people = np.flatnonzero(active & (self.segment == seg))
-            counts = rng.poisson(flow.events * self.activity[people] * season)
+            people = people[self.hi[people] > self._lo_day(people, d0)]
+            counts = rng.poisson(flow.events * self.activity[people] * self.act[people] * season)
             idx = np.repeat(people, counts)
             if idx.size == 0:
                 continue
@@ -472,7 +610,7 @@ class _Simulation:
             idx, amount = idx[keep], amount[keep]
             kinds = _choose(rng, flow.channels, idx.size)
             lo = self._lo_day(idx, d0)
-            day = lo + (rng.random(idx.size) * (n_days - lo)).astype("int64")
+            day = lo + (rng.random(idx.size) * (self.hi[idx] - lo)).astype("int64")
             date = d0 + day.astype("timedelta64[D]")
             has_debit = self.debit_from[idx] <= date
             has_cc = self.cc_from[idx] <= date
@@ -491,7 +629,12 @@ class _Simulation:
                 else:
                     ch = np.full(sel.size, _C[channel], dtype="int8")
                 is_branch = ch == _C["BRANCH"]
-                ts = _at(date[sel], self._hours(sel.size, is_branch))
+                hours = self._hours(sel.size, is_branch)
+                if txn == "CARD_PURCHASE":
+                    # Some genuine customers shop late at night too.
+                    night = rng.random(sel.size) < self.sig.legit_night_purchase_share
+                    hours = np.where(night, rng.integers(0, 5 * 3600, size=sel.size), hours)
+                ts = _at(date[sel], hours)
                 ts = np.where(is_branch, self._skip_sunday(ts, d0, n_days, lo[sel]), ts)
                 account = self.op_acc[who].copy()
                 merchant = None
@@ -502,6 +645,11 @@ class _Simulation:
                     account[on_cc] = self.cc_acc[who[on_cc]]
                     merchant = self._merchants(who, online=channel == "ONLINE")
                 cp = self._counterparty(kind, who)
+                cp_account = self._counterparty_account(kind, who)
+                if kind == "TRANSFER_OUT":
+                    cp = np.where(cp_account != None, self._payee_bank_for(who, cp_account), cp)  # noqa: E711
+                on_mobile = ch == _C["MOBILE"]
+                device = np.where(on_mobile, self._devices(who), None) if on_mobile.any() else None
                 m.add(
                     account,
                     self.person[who],
@@ -512,6 +660,8 @@ class _Simulation:
                     True,
                     merchant=merchant,
                     counterparty=cp,
+                    counterparty_account=cp_account,
+                    device=device,
                 )
 
     def _loans(self, m: _Month, d0, d1) -> np.ndarray:
@@ -611,8 +761,12 @@ class _Simulation:
         idx = np.flatnonzero(earning & (self.sav_acc > 0) & (self.sav_from <= d1))
         if idx.size == 0:
             return swept
+        idx = idx[self.churn_date[idx] > d1]
         amount = np.round(
-            (1 - self.spend_ratio[idx]) * self.income[idx] * self.b.savings_sweep_share
+            (1 - self.spend_ratio[idx])
+            * self.income[idx]
+            * self.inc[idx]
+            * self.b.savings_sweep_share
         )
         keep = amount > 0
         idx, amount = idx[keep], amount[keep]
@@ -659,7 +813,8 @@ class _Simulation:
 
     def _fees(self, m: _Month, d1) -> None:
         fee = self.fee
-        idx = np.flatnonzero(fee["opened"] < d1)
+        # Accounts of customers who have left are closed and no longer charged.
+        idx = np.flatnonzero((fee["opened"] < d1) & (self.churn_date[fee["person"] - 1] > d1))
         ts = np.full(idx.size, d1).astype("datetime64[s]") + self._seconds(idx.size, 23, 24)
         m.add(
             fee["account"][idx],
@@ -711,7 +866,13 @@ class _Simulation:
                 ),
                 "merchant_id": _nullable(a["merchant"], a["merchant"] > 0),
                 "counterparty": pd.array(a["counterparty"], dtype="string"),
+                "counterparty_account": pd.array(a["counterparty_account"], dtype="string"),
+                "device_id": pd.array(a["device"], dtype="string"),
                 "balance_after_pesewas": _nullable(running, posted),
+                "fraud_type": pd.Categorical.from_codes(
+                    a["fraud"].astype("int64") - 1, FRAUD_TYPES
+                ),
+                "fraud_scenario_id": _nullable(a["scenario"], a["scenario"] > 0),
             }
         )
 
@@ -728,8 +889,8 @@ class _Simulation:
         first = np.maximum(np.maximum(self.joined[idx], self.op_from[idx]), d0)
         return (first - d0).astype("int64")
 
-    def _times(self, d0, n_days: int, lo: np.ndarray, branch: bool) -> np.ndarray:
-        day = lo + (self.rng.random(lo.size) * (n_days - lo)).astype("int64")
+    def _times(self, d0, n_days: int, lo: np.ndarray, hi: np.ndarray, branch: bool) -> np.ndarray:
+        day = lo + (self.rng.random(lo.size) * (hi - lo)).astype("int64")
         ts = _at(d0 + day.astype("timedelta64[D]"), self._hours(lo.size, np.full(lo.size, branch)))
         return self._skip_sunday(ts, d0, n_days, lo) if branch else ts
 
@@ -770,6 +931,37 @@ class _Simulation:
             sel = np.flatnonzero(local & (self.city[who] == city))
             if pool is not None and pool.size and sel.size:
                 out[sel] = rng.choice(pool, size=sel.size)
+        return out
+
+    def _counterparty_account(self, kind: str, who: np.ndarray) -> np.ndarray | None:
+        """Account numbers on the other side of interbank transfers."""
+        if kind == "TRANSFER_IN":
+            return _account_numbers(self.rng, who.size)
+        if kind != "TRANSFER_OUT":
+            return None
+        out = np.full(who.size, None, dtype=object)
+        count = self.payee_count[who]
+        regular = (count > 0) & (self.rng.random(who.size) >= self.sig.new_beneficiary_share)
+        pick = self.payee_start[who] + (self.rng.random(who.size) * np.maximum(count, 1)).astype(
+            int
+        )
+        out[regular] = self.payee[pick[regular]]
+        out[~regular] = _account_numbers(self.rng, int((~regular).sum()))
+        return out
+
+    def _payee_bank_for(self, who: np.ndarray, accounts: np.ndarray) -> np.ndarray:
+        """Bank of a regular payee (one-off payees keep the randomly drawn bank)."""
+        return np.array([self.payee_bank_of.get(a) for a in accounts], dtype=object)
+
+    def _devices(self, who: np.ndarray) -> np.ndarray:
+        """A device the customer uses for mobile banking (None if they have none)."""
+        count = self.device_count[who]
+        pick = self.device_start[who] + (self.rng.random(who.size) * np.maximum(count, 1)).astype(
+            int
+        )
+        out = np.full(who.size, None, dtype=object)
+        has = count > 0
+        out[has] = self.device[pick[has]]
         return out
 
     def _counterparty(self, kind: str, who: np.ndarray) -> np.ndarray | None:
@@ -832,6 +1024,15 @@ def _choose(rng: np.random.Generator, mix: dict[str, float], n: int) -> np.ndarr
 
 def _enabled(since: np.ndarray, d0, n_days: int) -> np.ndarray:
     return since <= d0 + np.timedelta64(n_days - 1, "D")
+
+
+def _offsets(person_ids: np.ndarray, n: int) -> tuple[np.ndarray, np.ndarray]:
+    """Start index and row count per person for a frame sorted by person_id (1..n)."""
+    if person_ids.size and np.any(np.diff(person_ids) < 0):
+        raise ValueError("expected rows sorted by person_id")
+    count = np.bincount(person_ids - 1, minlength=n) if person_ids.size else np.zeros(n, int)
+    start = np.r_[0, np.cumsum(count)[:-1]]
+    return start, count
 
 
 def _nullable(values: np.ndarray, valid: np.ndarray) -> pd.Series:
