@@ -57,7 +57,10 @@ def events_delivered(world: World, since: pd.Timestamp | None, until: pd.Timesta
     events = events[(events["delivered_at"] >= lo) & (events["delivered_at"] < hi)]
     batch = SourceBatch(SYSTEM)
     batch.add(
-        "app_events", events.sort_values(["delivered_at", "event_id"], kind="stable"), "jsonl"
+        "app_events",
+        events.sort_values(["delivered_at", "event_id"], kind="stable"),
+        "jsonl",
+        partition_by="delivered_at",
     )
     return batch
 

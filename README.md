@@ -42,9 +42,19 @@ uv run ruff format . # format
 uv build            # build the isbank wheel for Fabric
 ```
 
+### Generating the source systems
+
+```bash
+uv run python -m generator summary --profile dev                  # build the world, print counts
+uv run python -m generator backfill --profile dev --out output/dev  # land every source up to "today"
+uv run python -m generator tick --out output/dev --days 1           # land the next simulated day
+```
+
+Use `--profile full` for the 50k-customer world (about 7M postings). Output is reproducible from config and seed, so it is never committed. See [docs/source_systems/](docs/source_systems/) for what each system emits and its planted flaws.
+
 ## Status
 
-**Phase 0: Foundation.** Repo scaffold, conventions, and ADR-001.
+**Phase 1: Synthetic world and source emitters.** The world simulator, nine source projectors, the answer key, and local emitters are built and tested. Landing the data in the Fabric workspace is next.
 
 | Phase | Scope |
 |---|---|

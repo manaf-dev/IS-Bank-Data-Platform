@@ -35,7 +35,12 @@ def events_delivered(world: World, since: pd.Timestamp | None, until: pd.Timesta
     lo = pd.Timestamp.min if since is None else since + pd.Timedelta(days=1)
     events = events[(events["delivered_at"] >= lo) & (events["delivered_at"] < hi)]
     batch = SourceBatch(SYSTEM)
-    batch.add("card_authorisations", events.sort_values("delivered_at", kind="stable"), "jsonl")
+    batch.add(
+        "card_authorisations",
+        events.sort_values("delivered_at", kind="stable"),
+        "jsonl",
+        partition_by="delivered_at",
+    )
     return batch
 
 

@@ -20,7 +20,9 @@ dev = [
 # Data libraries (polars/numpy/...) are added in Phase 1.
 generator = [
     "numpy>=2.5.4",
+    "openpyxl>=3.1.5",
     "pandas>=3.0.6",
+    "pyarrow>=26.0.0",
     "pyyaml>=6.0",
 ]
 
