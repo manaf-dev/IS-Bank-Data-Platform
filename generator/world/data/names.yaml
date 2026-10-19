@@ -1,0 +1,55 @@
+# Name lists for the world simulator, ordered roughly from most to least common
+# (sampling weight comes from rank; see customers.names.popularity_exponent in config.yaml).
+# These are common given names and family names, composed randomly: no combination is
+# intended to describe a real person.
+
+# Akan day names, indexed by birth weekday: Sunday first.
+akan_day_names:
+  male: [Kwesi, Kwadwo, Kwabena, Kwaku, Yaw, Kofi, Kwame]
+  female: [Akosua, Adwoa, Abena, Akua, Yaa, Afua, Ama]
+
+# Given names shared across groups (mostly Christian/English usage).
+common_given:
+  male: [Emmanuel, Daniel, Samuel, Michael, Isaac, Joseph, Richard, Eric, Prince, Ebenezer,
+         Francis, Kingsley, Godfred, Stephen, Benjamin, Charles, George, Joshua, Bernard, Felix]
+  female: [Grace, Mercy, Esther, Comfort, Gifty, Patience, Felicia, Joyce, Priscilla, Vida,
+           Abigail, Elizabeth, Linda, Rita, Rebecca, Sarah, Victoria, Doris, Juliana, Agnes]
+
+groups:
+  # Akan given names are day names, so they come only from akan_day_names (matched to
+  # the birth weekday); other Akan first names come from common_given.
+  akan:
+    surnames: [Mensah, Owusu, Asante, Boateng, Osei, Appiah, Agyeman, Amoah, Bonsu, Ofori,
+               Adjei, Darko, Frimpong, Asamoah, Antwi, Gyamfi, Acheampong, Sarpong, Opoku,
+               Danquah, Ansah, Amponsah, Baffoe, Kusi, Badu, Nyarko, Ampofo, Sackey, Arthur,
+               Quansah]
+  ewe:
+    given:
+      male: [Selorm, Elikem, Senyo, Edem, Mawuli, Delali, Kafui, Kekeli, Yayra, Kodzo]
+      female: [Dzifa, Enyonam, Esinam, Sena, Xorlali, Akpene, Elinam, Seyram, Dela, Abla]
+    surnames: [Agbeko, Amegashie, Dzokoto, Kpodo, Agbenyega, Gbedemah, Akpabli, Tsikata,
+               Ahiable, Adzaku, Agbodeka, Dogbe, Kumordzi, Ahadzie, Fiagbe, Amenyo, Torgbor,
+               Akakpo, Afenyo, Gadzekpo]
+  ga_dangme:
+    given:
+      male: [Nii Armah, Nii Ayi, Nii Odoi, Nii Okai, Tetteh, Ashitey, Nii Lante, Nii Kpakpo]
+      female: [Naa Dedei, Naa Korkoi, Naa Adoley, Naa Akweley, Momo, Naa Lamiley, Naa Ayeley, Naa Shika]
+    surnames: [Quaye, Lamptey, Tetteh, Quartey, Ankrah, Laryea, Nortey, Okine, Addo, Ashong,
+               Aryee, Kotey, Odartey, Lartey, Sowah, Adjetey, Tagoe, Commey, Mensah, Annan]
+  northern:
+    given:
+      male: [Mohammed, Abdul, Ibrahim, Issah, Alhassan, Abubakari, Yakubu, Fuseini, Sulemana,
+             Mustapha, Azure, Atinga, Ayamga, Akanbong]
+      female: [Fatima, Amina, Mariama, Zenabu, Salamatu, Hawa, Rahinatu, Ayishetu, Memuna,
+               Asana, Awintima, Atampoka]
+    surnames: [Alhassan, Iddrisu, Abdulai, Mahama, Issahaku, Seidu, Yakubu, Fuseini, Abukari,
+               Azure, Atinga, Ayamga, Anabila, Akolgo, Apuri, Adongo, Salifu, Musah, Awuni,
+               Bawa]
+
+# SME business names are composed as "<prefix> <trade> <suffix>" or "<surname> & Sons <suffix>".
+business:
+  prefixes: [God's Grace, Adom, Blessed, Abundant, Ebenezer, Shalom, Royal, Golden, Sika,
+             Nyame Bekyere, Divine, Unity, Peace, Glory, Victory]
+  trades: [Trading, Hardware, Cosmetics, Provisions, Textiles, Building Materials, Pharmacy,
+           Auto Parts, Catering, Electricals, Agro, Fashion, Logistics, Printing]
+  suffixes: [Enterprise, Ventures, Ltd, Company Limited]

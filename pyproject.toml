@@ -19,6 +19,8 @@ dev = [
 # Local-only dependencies of the synthetic source-system simulator.
 # Data libraries (polars/numpy/...) are added in Phase 1.
 generator = [
+    "numpy>=2.5.4",
+    "pandas>=3.0.6",
     "pyyaml>=6.0",
 ]
 

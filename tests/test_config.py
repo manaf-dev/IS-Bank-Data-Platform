@@ -1,99 +1,85 @@
-"""Consistency checks for generator/config.yaml.
+"""Tests for the generator config loader and its validation rules.
 
-The world simulator trusts this config, so mistakes here (weights that don't sum to 1,
-a product offered to an unknown segment) would silently skew every downstream dataset.
+The shipped config must load cleanly, and each class of mistake (weights that don't sum
+to 1, unknown segments, impossible dates) must be rejected at load time.
 """
 
+import copy
 import datetime as dt
 from pathlib import Path
 
 import pytest
 import yaml
 
-TOLERANCE = 1e-9
+from generator.config import DEFAULT_CONFIG_PATH, ConfigError, load_config, parse_config
 
 
 @pytest.fixture(scope="module")
-def config(repo_root: Path) -> dict:
-    return yaml.safe_load((repo_root / "generator" / "config.yaml").read_text(encoding="utf-8"))
+def raw() -> dict:
+    return yaml.safe_load(Path(DEFAULT_CONFIG_PATH).read_text(encoding="utf-8"))
 
 
-@pytest.fixture(scope="module")
-def segment_names(config: dict) -> set[str]:
-    return set(config["segments"]["archetypes"])
+def broken(raw: dict, mutate) -> dict:
+    copied = copy.deepcopy(raw)
+    mutate(copied)
+    return copied
 
 
-def test_simulation_window_is_three_full_years(config: dict):
-    sim = config["simulation"]
-    assert sim["start_date"] == dt.date(2023, 1, 1)
-    assert sim["today"] == dt.date(2025, 12, 31)
-    assert sim["currency"] == "GHS"
+def test_shipped_config_loads_for_every_profile(raw: dict):
+    for profile in raw["profiles"]:
+        assert load_config(profile=profile).profile == profile
 
 
-def test_branches_have_unique_codes_and_names(config: dict):
-    branches = config["branches"]
-    assert len(branches) == 15
-    assert len({b["branch_code"] for b in branches}) == len(branches)
-    assert len({b["name"] for b in branches}) == len(branches)
+def test_profile_overrides_customer_count():
+    assert load_config(profile="dev").customers.count == 2000
+    assert load_config(profile="full").customers.count == 50000
 
 
-def test_branch_customer_shares_sum_to_one(config: dict):
-    total = sum(b["customer_share"] for b in config["branches"])
-    assert total == pytest.approx(1.0, abs=TOLERANCE)
+def test_simulation_window_is_three_full_years():
+    config = load_config()
+    assert config.start_date == dt.date(2023, 1, 1)
+    assert config.today == dt.date(2025, 12, 31)
+    assert config.currency == "GHS"
 
 
-def test_branches_cover_all_planned_cities(config: dict):
+def test_branches_cover_all_planned_cities():
     planned = {
         "Accra", "Tema", "Kumasi", "Takoradi", "Tamale",
         "Cape Coast", "Ho", "Sunyani", "Koforidua", "Bolgatanga",
     }  # fmt: skip
-    assert {b["city"] for b in config["branches"]} == planned
+    branches = load_config().branches
+    assert len(branches) == 15
+    assert {b.city for b in branches} == planned
 
 
-def test_branch_opening_dates_precede_simulated_today(config: dict):
-    today = config["simulation"]["today"]
-    for branch in config["branches"]:
-        assert isinstance(branch["opened_on"], dt.date)
-        assert branch["opened_on"] <= today, branch["branch_code"]
+def test_unknown_profile_is_rejected(raw: dict):
+    with pytest.raises(ConfigError, match="unknown profile"):
+        parse_config(raw, profile="prod")
 
 
-def test_segment_mixes_sum_to_one_over_known_segments(config: dict, segment_names: set[str]):
-    mixes = {"bank-wide": config["segments"]["mix"]}
-    mixes |= {b["branch_code"]: b["segment_mix"] for b in config["branches"] if "segment_mix" in b}
-    for owner, mix in mixes.items():
-        assert set(mix) == segment_names, owner
-        assert sum(mix.values()) == pytest.approx(1.0, abs=TOLERANCE), owner
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda c: c["branches"][0].update(customer_share=0.5), "customer_share"),
+        (lambda c: c["branches"][1].update(branch_code="BR001"), "branch codes must be unique"),
+        (lambda c: c["branches"][0].update(opened_on=dt.date(2026, 6, 1)), "opened_on"),
+        (lambda c: c["branches"][0]["segment_mix"].update(sme=0.5), "BR001.segment_mix"),
+        (lambda c: c["segments"]["mix"].pop("sme"), "segments.mix"),
+        (lambda c: c["products"][0]["take_up"].update(pensioner=0.5), "unknown segments"),
+        (lambda c: c["products"][1].update(product_code="CA_PER"), "product codes must be unique"),
+        (lambda c: c["products"][0].update(family="insurance"), "unknown family"),
+        (lambda c: c["simulation"].update(today=dt.date(2022, 1, 1)), "start_date must be before"),
+        (lambda c: c["customers"].update(female_share=1.5), "female_share"),
+        (lambda c: c["customers"]["mobile_network_share"].update(MTN=0.9), "mobile_network_share"),
+        (lambda c: c["customers"]["ethnicity_by_region"].pop("Volta"), "no ethnicity weights"),
+        (lambda c: c["customers"]["age_at_join"].update(min=90), "age_at_join"),
+    ],
+)
+def test_inconsistent_config_is_rejected(raw: dict, mutate, message: str):
+    with pytest.raises(ConfigError, match=message):
+        parse_config(broken(raw, mutate))
 
 
-def test_archetype_parameters_are_in_range(config: dict):
-    for name, archetype in config["segments"]["archetypes"].items():
-        assert archetype["customer_type"] in {"individual", "business"}, name
-        assert archetype["monthly_income_ghs"]["median"] > 0, name
-        assert archetype["monthly_income_ghs"]["sigma"] > 0, name
-        assert 0 <= archetype["income_regularity"] <= 1, name
-        assert 0 <= archetype["cash_intensity"] <= 1, name
-
-
-def test_products_have_unique_codes_and_valid_take_up(config: dict, segment_names: set[str]):
-    products = config["products"]
-    assert len({p["product_code"] for p in products}) == len(products)
-    for product in products:
-        assert product["family"] in {"deposit", "card", "loan"}, product["product_code"]
-        assert set(product["take_up"]) <= segment_names, product["product_code"]
-        assert all(0 < p <= 1 for p in product["take_up"].values()), product["product_code"]
-
-
-def test_every_segment_can_hold_a_deposit_product(config: dict, segment_names: set[str]):
-    covered = {
-        segment
-        for product in config["products"]
-        if product["family"] == "deposit"
-        for segment in product["take_up"]
-    }
-    assert covered == segment_names
-
-
-def test_services_reference_known_segments(config: dict, segment_names: set[str]):
-    for service, take_up in config["services"].items():
-        assert set(take_up) <= segment_names, service
-        assert all(0 < p <= 1 for p in take_up.values()), service
+def test_missing_section_is_reported_as_config_error(raw: dict):
+    with pytest.raises(ConfigError, match="malformed config"):
+        parse_config(broken(raw, lambda c: c.pop("customers")))

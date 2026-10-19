@@ -13,23 +13,67 @@ simulation:
   today: 2025-12-31
   currency: GHS
 
-# Select with --profile (default: dev). Profiles override the base values above.
+# Select with --profile (default: dev). A profile is deep-merged over the base values.
 profiles:
   dev:
-    customers: 2000
+    customers: { count: 2000 }
   full:
-    customers: 50000
+    customers: { count: 50000 }
+
+# ---------------------------------------------------------------- customers
+customers:
+  count: 2000
+  # Share of customers (at branches open before start_date) who joined before the window.
+  pre_window_share: 0.60
+  earliest_join_date: 2005-01-01
+  # Age when the customer (or SME owner) joined: truncated normal.
+  age_at_join: { mean: 36, sd: 11, min: 18, max: 80 }
+  female_share: 0.48
+  email_share: { individual: 0.45, business: 0.90 }
+  # Addresses with a numeric suffix, e.g. kwame.mensah84@...
+  email_digit_suffix_share: 0.50
+  # RFC 2606 reserved domains, so synthetic addresses can never reach a real mailbox.
+  email_domains: { example.com: 0.6, example.org: 0.25, example.net: 0.15 }
+  mobile_network_share: { MTN: 0.65, Telecel: 0.22, AirtelTigo: 0.13 }
+  names:
+    # Rank-based popularity: weight of the k-th listed name is 1 / k**exponent.
+    popularity_exponent: 0.7
+    # Akan customers whose name includes their birth-weekday name.
+    akan_day_name_rate: 0.75
+    # Of those, the share where the day name is the first name (else the middle name).
+    day_name_first_share: 0.45
+    # Customers with any middle name at all (day names aside).
+    middle_name_rate: 0.35
+    # Non-Akan customers whose first name is a common (mostly Christian/English) given name
+    # rather than one from their group's own list.
+    common_given_share: { ewe: 0.45, ga_dangme: 0.45, northern: 0.15 }
+    # SME names of the "<Surname> & Sons" form rather than "<prefix> <trade> <suffix>".
+    business_family_firm_share: 0.25
+  # Ethnic-group weights by branch region; drives which name lists are sampled.
+  ethnicity_by_region:
+    Greater Accra: { akan: 0.45, ga_dangme: 0.25, ewe: 0.20, northern: 0.10 }
+    Ashanti: { akan: 0.80, ga_dangme: 0.03, ewe: 0.05, northern: 0.12 }
+    Western: { akan: 0.80, ga_dangme: 0.05, ewe: 0.08, northern: 0.07 }
+    Central: { akan: 0.85, ga_dangme: 0.04, ewe: 0.06, northern: 0.05 }
+    Northern: { akan: 0.10, ga_dangme: 0.02, ewe: 0.03, northern: 0.85 }
+    Upper East: { akan: 0.05, ga_dangme: 0.01, ewe: 0.02, northern: 0.92 }
+    Volta: { akan: 0.10, ga_dangme: 0.04, ewe: 0.82, northern: 0.04 }
+    Bono: { akan: 0.82, ga_dangme: 0.01, ewe: 0.03, northern: 0.14 }
+    Eastern: { akan: 0.70, ga_dangme: 0.12, ewe: 0.12, northern: 0.06 }
 
 # ---------------------------------------------------------------- branches
 # customer_share: share of customers whose home branch this is (sums to 1).
 # income_index:   relative income level of the catchment (1.0 = bank average).
 # digital_index:  relative propensity to use mobile/online banking (1.0 = bank average).
+# gps_district:   Ghana Post GPS district prefix used for customers' digital addresses
+#                 (approximate; illustrative only).
 # segment_mix:    optional override of the bank-wide segment mix for this branch.
 branches:
   - branch_code: BR001
     name: Accra Makola
     city: Accra
     region: Greater Accra
+    gps_district: GA
     opened_on: 2008-03-03
     customer_share: 0.10
     income_index: 0.90
@@ -44,6 +88,7 @@ branches:
     name: Accra Osu
     city: Accra
     region: Greater Accra
+    gps_district: GA
     opened_on: 2009-06-01
     customer_share: 0.08
     income_index: 1.40
@@ -52,6 +97,7 @@ branches:
     name: Accra Achimota
     city: Accra
     region: Greater Accra
+    gps_district: GA
     opened_on: 2012-09-03
     customer_share: 0.08
     income_index: 1.10
@@ -60,6 +106,7 @@ branches:
     name: Accra Madina
     city: Accra
     region: Greater Accra
+    gps_district: GA
     # Opens inside the simulation window: customers before this date bank elsewhere.
     opened_on: 2024-06-03
     customer_share: 0.07
@@ -69,6 +116,7 @@ branches:
     name: Accra Airport City
     city: Accra
     region: Greater Accra
+    gps_district: GA
     opened_on: 2015-02-02
     customer_share: 0.06
     income_index: 1.60
@@ -83,6 +131,7 @@ branches:
     name: Tema Community 1
     city: Tema
     region: Greater Accra
+    gps_district: GT
     opened_on: 2010-04-06
     customer_share: 0.08
     income_index: 1.20
@@ -91,6 +140,7 @@ branches:
     name: Kumasi Adum
     city: Kumasi
     region: Ashanti
+    gps_district: AK
     opened_on: 2008-03-03
     customer_share: 0.10
     income_index: 1.00
@@ -99,6 +149,7 @@ branches:
     name: Kumasi Suame
     city: Kumasi
     region: Ashanti
+    gps_district: AK
     opened_on: 2013-07-01
     customer_share: 0.07
     income_index: 0.85
@@ -113,6 +164,7 @@ branches:
     name: Takoradi Market Circle
     city: Takoradi
     region: Western
+    gps_district: WS
     opened_on: 2011-05-03
     customer_share: 0.07
     income_index: 1.05
@@ -121,6 +173,7 @@ branches:
     name: Tamale Central
     city: Tamale
     region: Northern
+    gps_district: NT
     opened_on: 2012-02-01
     customer_share: 0.06
     income_index: 0.70
@@ -129,6 +182,7 @@ branches:
     name: Cape Coast
     city: Cape Coast
     region: Central
+    gps_district: CC
     opened_on: 2011-10-03
     customer_share: 0.05
     income_index: 0.85
@@ -137,6 +191,7 @@ branches:
     name: Ho
     city: Ho
     region: Volta
+    gps_district: VH
     opened_on: 2014-03-03
     customer_share: 0.045
     income_index: 0.80
@@ -145,6 +200,7 @@ branches:
     name: Sunyani
     city: Sunyani
     region: Bono
+    gps_district: BS
     opened_on: 2014-08-04
     customer_share: 0.045
     income_index: 0.85
@@ -153,6 +209,7 @@ branches:
     name: Koforidua
     city: Koforidua
     region: Eastern
+    gps_district: EN
     opened_on: 2013-01-07
     customer_share: 0.05
     income_index: 0.85
@@ -161,6 +218,7 @@ branches:
     name: Bolgatanga
     city: Bolgatanga
     region: Upper East
+    gps_district: UB
     opened_on: 2016-05-02
     customer_share: 0.04
     income_index: 0.60
