@@ -1,14 +1,16 @@
 # Single source of truth for every generator rate, fraction, noise level, and date window.
 # Nothing in generator code may hardcode these values.
 #
-# Values marked TODO are open questions in CLAUDE.md section 12: decide them, record
-# the decision in an ADR, then fill them in.
+# Reference data below (branches, segments, products) is a DRAFT for review: see ADR-0002.
+# All names are fictional; incomes are rough, illustrative GHS figures, not market data.
 
 seed: 20261019
 
 simulation:
-  start_date: null   # TODO: simulated history window (target about 3 years)
-  today: null        # TODO: simulated "today" date
+  # Three full calendar years, so each year has its own Christmas, Easter, and
+  # school-fees season. After `today`, daily ticks continue from the next day.
+  start_date: 2023-01-01
+  today: 2025-12-31
   currency: GHS
 
 # Select with --profile (default: dev). Profiles override the base values above.
@@ -17,3 +19,246 @@ profiles:
     customers: 2000
   full:
     customers: 50000
+
+# ---------------------------------------------------------------- branches
+# customer_share: share of customers whose home branch this is (sums to 1).
+# income_index:   relative income level of the catchment (1.0 = bank average).
+# digital_index:  relative propensity to use mobile/online banking (1.0 = bank average).
+# segment_mix:    optional override of the bank-wide segment mix for this branch.
+branches:
+  - branch_code: BR001
+    name: Accra Makola
+    city: Accra
+    region: Greater Accra
+    opened_on: 2008-03-03
+    customer_share: 0.10
+    income_index: 0.90
+    digital_index: 0.90
+    segment_mix:
+      civil_servant: 0.10
+      corporate_employee: 0.12
+      market_trader: 0.48
+      susu_saver: 0.18
+      sme: 0.12
+  - branch_code: BR002
+    name: Accra Osu
+    city: Accra
+    region: Greater Accra
+    opened_on: 2009-06-01
+    customer_share: 0.08
+    income_index: 1.40
+    digital_index: 1.35
+  - branch_code: BR003
+    name: Accra Achimota
+    city: Accra
+    region: Greater Accra
+    opened_on: 2012-09-03
+    customer_share: 0.08
+    income_index: 1.10
+    digital_index: 1.15
+  - branch_code: BR004
+    name: Accra Madina
+    city: Accra
+    region: Greater Accra
+    # Opens inside the simulation window: customers before this date bank elsewhere.
+    opened_on: 2024-06-03
+    customer_share: 0.07
+    income_index: 1.00
+    digital_index: 1.10
+  - branch_code: BR005
+    name: Accra Airport City
+    city: Accra
+    region: Greater Accra
+    opened_on: 2015-02-02
+    customer_share: 0.06
+    income_index: 1.60
+    digital_index: 1.50
+    segment_mix:
+      civil_servant: 0.10
+      corporate_employee: 0.50
+      market_trader: 0.05
+      susu_saver: 0.05
+      sme: 0.30
+  - branch_code: BR006
+    name: Tema Community 1
+    city: Tema
+    region: Greater Accra
+    opened_on: 2010-04-06
+    customer_share: 0.08
+    income_index: 1.20
+    digital_index: 1.10
+  - branch_code: BR007
+    name: Kumasi Adum
+    city: Kumasi
+    region: Ashanti
+    opened_on: 2008-03-03
+    customer_share: 0.10
+    income_index: 1.00
+    digital_index: 1.00
+  - branch_code: BR008
+    name: Kumasi Suame
+    city: Kumasi
+    region: Ashanti
+    opened_on: 2013-07-01
+    customer_share: 0.07
+    income_index: 0.85
+    digital_index: 0.85
+    segment_mix:
+      civil_servant: 0.08
+      corporate_employee: 0.10
+      market_trader: 0.45
+      susu_saver: 0.17
+      sme: 0.20
+  - branch_code: BR009
+    name: Takoradi Market Circle
+    city: Takoradi
+    region: Western
+    opened_on: 2011-05-03
+    customer_share: 0.07
+    income_index: 1.05
+    digital_index: 0.95
+  - branch_code: BR010
+    name: Tamale Central
+    city: Tamale
+    region: Northern
+    opened_on: 2012-02-01
+    customer_share: 0.06
+    income_index: 0.70
+    digital_index: 0.75
+  - branch_code: BR011
+    name: Cape Coast
+    city: Cape Coast
+    region: Central
+    opened_on: 2011-10-03
+    customer_share: 0.05
+    income_index: 0.85
+    digital_index: 0.90
+  - branch_code: BR012
+    name: Ho
+    city: Ho
+    region: Volta
+    opened_on: 2014-03-03
+    customer_share: 0.045
+    income_index: 0.80
+    digital_index: 0.85
+  - branch_code: BR013
+    name: Sunyani
+    city: Sunyani
+    region: Bono
+    opened_on: 2014-08-04
+    customer_share: 0.045
+    income_index: 0.85
+    digital_index: 0.85
+  - branch_code: BR014
+    name: Koforidua
+    city: Koforidua
+    region: Eastern
+    opened_on: 2013-01-07
+    customer_share: 0.05
+    income_index: 0.85
+    digital_index: 0.90
+  - branch_code: BR015
+    name: Bolgatanga
+    city: Bolgatanga
+    region: Upper East
+    opened_on: 2016-05-02
+    customer_share: 0.04
+    income_index: 0.60
+    digital_index: 0.65
+
+# ---------------------------------------------------------------- customer segments
+# Bank-wide archetype mix (sums to 1); branches may override it above.
+# monthly_income_ghs: lognormal median and sigma, before the branch income_index is applied.
+#   For `sme` this is monthly business turnover rather than personal income.
+# income_regularity: 1.0 = same amount on a fixed pay day; lower = more irregular inflows.
+# cash_intensity:    share of activity done in cash at the branch rather than electronically.
+segments:
+  mix:
+    civil_servant: 0.20
+    corporate_employee: 0.22
+    market_trader: 0.28
+    susu_saver: 0.18
+    sme: 0.12
+  archetypes:
+    civil_servant:
+      customer_type: individual
+      monthly_income_ghs: { median: 3500, sigma: 0.35 }
+      income_regularity: 0.95
+      cash_intensity: 0.25
+    corporate_employee:
+      customer_type: individual
+      monthly_income_ghs: { median: 5500, sigma: 0.55 }
+      income_regularity: 0.95
+      cash_intensity: 0.15
+    market_trader:
+      customer_type: individual
+      monthly_income_ghs: { median: 2800, sigma: 0.80 }
+      income_regularity: 0.30
+      cash_intensity: 0.70
+    susu_saver:
+      customer_type: individual
+      monthly_income_ghs: { median: 1500, sigma: 0.60 }
+      income_regularity: 0.50
+      cash_intensity: 0.75
+    sme:
+      customer_type: business
+      monthly_income_ghs: { median: 30000, sigma: 1.00 }
+      income_regularity: 0.40
+      cash_intensity: 0.45
+
+# ---------------------------------------------------------------- products
+# take_up: probability a customer of that segment holds the product at some point in the
+#   window. Segments not listed are not eligible.
+products:
+  # Deposits
+  - product_code: CA_PER
+    name: Personal Current Account
+    family: deposit
+    take_up: { civil_servant: 0.90, corporate_employee: 0.95, market_trader: 0.55, susu_saver: 0.20 }
+  - product_code: CA_BIZ
+    name: Business Current Account
+    family: deposit
+    take_up: { market_trader: 0.15, sme: 1.00 }
+  - product_code: SA_REG
+    name: Regular Savings Account
+    family: deposit
+    take_up: { civil_servant: 0.55, corporate_employee: 0.60, market_trader: 0.50, susu_saver: 0.40 }
+  - product_code: SA_SUSU
+    name: Susu Savings Account
+    family: deposit
+    take_up: { market_trader: 0.30, susu_saver: 0.95 }
+  - product_code: FD_TERM
+    name: Fixed Deposit (91/182/365 days)
+    family: deposit
+    take_up: { civil_servant: 0.10, corporate_employee: 0.18, market_trader: 0.05, sme: 0.20 }
+  # Cards
+  - product_code: DC_DEBIT
+    name: Debit Card
+    family: card
+    take_up: { civil_servant: 0.80, corporate_employee: 0.92, market_trader: 0.40, susu_saver: 0.15, sme: 0.50 }
+  - product_code: CC_CLASSIC
+    name: Classic Credit Card
+    family: card
+    take_up: { civil_servant: 0.04, corporate_employee: 0.12, sme: 0.05 }
+  # Lending
+  - product_code: LN_PERS
+    name: Personal Loan
+    family: loan
+    take_up: { civil_servant: 0.30, corporate_employee: 0.22 }
+  - product_code: LN_SALADV
+    name: Salary Advance
+    family: loan
+    take_up: { civil_servant: 0.20, corporate_employee: 0.15 }
+  - product_code: LN_MICRO
+    name: Trader Micro Loan
+    family: loan
+    take_up: { market_trader: 0.25, susu_saver: 0.10 }
+  - product_code: LN_SME_WC
+    name: SME Working Capital Loan
+    family: loan
+    take_up: { sme: 0.40 }
+
+# Services attached to a customer rather than an account.
+services:
+  mobile_banking: { civil_servant: 0.60, corporate_employee: 0.80, market_trader: 0.45, susu_saver: 0.25, sme: 0.70 }
+  momo_wallet_link: { civil_servant: 0.55, corporate_employee: 0.65, market_trader: 0.70, susu_saver: 0.50, sme: 0.60 }
