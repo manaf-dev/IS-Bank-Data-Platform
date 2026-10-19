@@ -50,13 +50,27 @@ class Archetype:
 
 
 @dataclass(frozen=True)
+class ProductTerms:
+    """Contract terms drawn when a product is opened."""
+
+    amount_median_income_multiple: float
+    amount_sigma: float
+    rate_min_pct: float
+    rate_max_pct: float
+    term_months: tuple[int, ...] | None
+    term_weights: tuple[float, ...] | None
+
+
+@dataclass(frozen=True)
 class Product:
-    """A product and its take-up probability for each eligible segment."""
+    """A product, its take-up per eligible segment, dependencies, and contract terms."""
 
     product_code: str
     name: str
     family: str
     take_up: dict[str, float]
+    requires_any: tuple[str, ...] = ()
+    terms: ProductTerms | None = None
 
 
 @dataclass(frozen=True)
@@ -106,6 +120,9 @@ class WorldConfig:
     products: tuple[Product, ...]
     services: dict[str, dict[str, float]]
     customers: CustomerParams
+    momo_same_number_share: float
+    contract_amount_rounding_ghs: int
+    dependent_open_lookback_months: int
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH, profile: str = "dev") -> WorldConfig:
@@ -181,14 +198,29 @@ def validate(config: WorldConfig) -> list[str]:
         if p.family not in {"deposit", "card", "loan"}:
             problems.append(f"{p.product_code}: unknown family {p.family!r}")
         _check_probabilities(problems, p.product_code, p.take_up, segments)
-    deposit_segments = {s for p in config.products if p.family == "deposit" for s in p.take_up}
+    by_code = {p.product_code: p for p in config.products}
+    for p in config.products:
+        _check_product_structure(problems, p, by_code)
+    # Every customer is guaranteed an account they can open on day one.
+    deposit_segments = {
+        s
+        for p in config.products
+        if p.family == "deposit" and not p.requires_any
+        for s in p.take_up
+    }
     if deposit_segments != segments:
         problems.append(
-            f"segments without a deposit product: {sorted(segments - deposit_segments)}"
+            f"segments without a standalone deposit product: {sorted(segments - deposit_segments)}"
         )
     for service, take_up in config.services.items():
         _check_probabilities(problems, f"services.{service}", take_up, segments)
 
+    if not 0 <= config.momo_same_number_share <= 1:
+        problems.append("holdings.momo_same_number_share must be in [0, 1]")
+    if config.contract_amount_rounding_ghs <= 0:
+        problems.append("holdings.contract_amount_rounding_ghs must be positive")
+    if config.dependent_open_lookback_months < 0:
+        problems.append("holdings.dependent_open_lookback_months must be non-negative")
     if cust.count <= 0:
         problems.append("customers.count must be positive")
     for field in ("pre_window_share", "female_share", "email_digit_suffix_share"):
@@ -271,6 +303,8 @@ def _build(raw: dict[str, Any], profile: str) -> WorldConfig:
                 name=p["name"],
                 family=p["family"],
                 take_up=p["take_up"],
+                requires_any=tuple(p.get("requires_any", ())),
+                terms=_build_terms(p["terms"]) if "terms" in p else None,
             )
             for p in raw["products"]
         ),
@@ -298,6 +332,23 @@ def _build(raw: dict[str, Any], profile: str) -> WorldConfig:
             ),
             ethnicity_by_region=cust["ethnicity_by_region"],
         ),
+        momo_same_number_share=float(raw["holdings"]["momo_same_number_share"]),
+        contract_amount_rounding_ghs=int(raw["holdings"]["contract_amount_rounding_ghs"]),
+        dependent_open_lookback_months=int(raw["holdings"]["dependent_open_lookback_months"]),
+    )
+
+
+def _build_terms(raw: dict[str, Any]) -> ProductTerms:
+    amount = raw["amount_income_multiple"]
+    rate = raw["annual_rate_pct"]
+    tenor = raw.get("term_months")
+    return ProductTerms(
+        amount_median_income_multiple=float(amount["median"]),
+        amount_sigma=float(amount["sigma"]),
+        rate_min_pct=float(rate["min"]),
+        rate_max_pct=float(rate["max"]),
+        term_months=tuple(int(v) for v in tenor["values"]) if tenor else None,
+        term_weights=tuple(float(w) for w in tenor["weights"]) if tenor else None,
     )
 
 
@@ -331,3 +382,34 @@ def _check_probabilities(
         problems.append(f"{label}: unknown segments {sorted(unknown)}")
     if any(not 0 < p <= 1 for p in take_up.values()):
         problems.append(f"{label}: take-up rates must be in (0, 1]")
+
+
+def _check_product_structure(problems: list[str], p: Product, by_code: dict[str, Product]) -> None:
+    """Dependencies must point at deposit accounts; term products need complete terms."""
+    code = p.product_code
+    for required in p.requires_any:
+        if required not in by_code:
+            problems.append(f"{code}: requires unknown product {required!r}")
+        elif by_code[required].family != "deposit" or by_code[required].requires_any:
+            problems.append(f"{code}: may only require standalone deposits, not {required!r}")
+    if p.family in {"card", "loan"} and not p.requires_any:
+        problems.append(f"{code}: cards and loans must require an account to link to")
+    needs_tenor = p.family == "loan" or code.startswith("FD_")
+    terms = p.terms
+    if terms is None:
+        if p.family == "loan" or needs_tenor:
+            problems.append(f"{code}: missing terms")
+        return
+    if terms.amount_median_income_multiple <= 0 or terms.amount_sigma <= 0:
+        problems.append(f"{code}: amount median and sigma must be positive")
+    if not 0 < terms.rate_min_pct <= terms.rate_max_pct:
+        problems.append(f"{code}: need 0 < annual_rate_pct.min <= max")
+    if needs_tenor and terms.term_months is None:
+        problems.append(f"{code}: missing term_months")
+    if terms.term_months is not None:
+        weights = terms.term_weights or ()
+        if len(weights) != len(terms.term_months) or any(m <= 0 for m in terms.term_months):
+            problems.append(f"{code}: term_months values and weights must align and be positive")
+        else:
+            tenor_weights = dict(zip(map(str, terms.term_months), weights, strict=True))
+            _check_weights(problems, f"{code}.term_months", tenor_weights)

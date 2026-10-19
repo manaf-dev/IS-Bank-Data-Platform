@@ -73,6 +73,16 @@ def test_unknown_profile_is_rejected(raw: dict):
         (lambda c: c["customers"]["mobile_network_share"].update(MTN=0.9), "mobile_network_share"),
         (lambda c: c["customers"]["ethnicity_by_region"].pop("Volta"), "no ethnicity weights"),
         (lambda c: c["customers"]["age_at_join"].update(min=90), "age_at_join"),
+        (lambda c: c["products"][5].update(requires_any=["XX"]), "requires unknown product"),
+        (lambda c: c["products"][7].update(requires_any=["DC_DEBIT"]), "standalone deposits"),
+        (lambda c: c["products"][7].pop("requires_any"), "must require an account"),
+        (lambda c: c["products"][7].pop("terms"), "missing terms"),
+        (
+            lambda c: c["products"][7]["terms"]["term_months"].update(weights=[1.0]),
+            "must align",
+        ),
+        (lambda c: c["products"][7]["terms"]["annual_rate_pct"].update(min=50), "annual_rate_pct"),
+        (lambda c: c["holdings"].update(momo_same_number_share=2), "momo_same_number_share"),
     ],
 )
 def test_inconsistent_config_is_rejected(raw: dict, mutate, message: str):

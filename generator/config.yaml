@@ -265,8 +265,12 @@ segments:
       cash_intensity: 0.45
 
 # ---------------------------------------------------------------- products
-# take_up: probability a customer of that segment holds the product at some point in the
-#   window. Segments not listed are not eligible.
+# take_up:      probability a customer of that segment holds the product at some point.
+#               Segments not listed are not eligible.
+# requires_any: the product can only be held alongside one of these (e.g. a card needs an
+#               account to draw from); the earliest such account becomes its linked account.
+# terms:        contract amount as a lognormal multiple of monthly income, tenor, and an
+#               annual rate drawn uniformly from [min, max]. Illustrative figures only.
 products:
   # Deposits
   - product_code: CA_PER
@@ -286,37 +290,80 @@ products:
     family: deposit
     take_up: { market_trader: 0.30, susu_saver: 0.95 }
   - product_code: FD_TERM
-    name: Fixed Deposit (91/182/365 days)
+    name: Fixed Deposit (3/6/12 months)
     family: deposit
     take_up: { civil_servant: 0.10, corporate_employee: 0.18, market_trader: 0.05, sme: 0.20 }
+    requires_any: [CA_PER, SA_REG, CA_BIZ]
+    terms:
+      amount_income_multiple: { median: 2.0, sigma: 0.8 }
+      term_months: { values: [3, 6, 12], weights: [0.4, 0.3, 0.3] }
+      annual_rate_pct: { min: 16, max: 24 }
   # Cards
   - product_code: DC_DEBIT
     name: Debit Card
     family: card
     take_up: { civil_servant: 0.80, corporate_employee: 0.92, market_trader: 0.40, susu_saver: 0.15, sme: 0.50 }
+    requires_any: [CA_PER, SA_REG, SA_SUSU, CA_BIZ]
   - product_code: CC_CLASSIC
     name: Classic Credit Card
     family: card
     take_up: { civil_servant: 0.04, corporate_employee: 0.12, sme: 0.05 }
+    requires_any: [CA_PER, CA_BIZ]
+    terms:
+      # For a credit card the contract amount is the credit limit.
+      amount_income_multiple: { median: 1.0, sigma: 0.4 }
+      annual_rate_pct: { min: 30, max: 42 }
   # Lending
   - product_code: LN_PERS
     name: Personal Loan
     family: loan
     take_up: { civil_servant: 0.30, corporate_employee: 0.22 }
+    requires_any: [CA_PER]
+    terms:
+      amount_income_multiple: { median: 6.0, sigma: 0.5 }
+      term_months: { values: [12, 24, 36, 48], weights: [0.2, 0.35, 0.3, 0.15] }
+      annual_rate_pct: { min: 26, max: 34 }
   - product_code: LN_SALADV
     name: Salary Advance
     family: loan
     take_up: { civil_servant: 0.20, corporate_employee: 0.15 }
+    requires_any: [CA_PER]
+    terms:
+      amount_income_multiple: { median: 0.5, sigma: 0.3 }
+      term_months: { values: [1, 2, 3], weights: [0.5, 0.3, 0.2] }
+      annual_rate_pct: { min: 30, max: 40 }
   - product_code: LN_MICRO
     name: Trader Micro Loan
     family: loan
     take_up: { market_trader: 0.25, susu_saver: 0.10 }
+    requires_any: [CA_PER, SA_REG, SA_SUSU, CA_BIZ]
+    terms:
+      amount_income_multiple: { median: 1.5, sigma: 0.6 }
+      term_months: { values: [3, 6, 12], weights: [0.3, 0.4, 0.3] }
+      annual_rate_pct: { min: 36, max: 48 }
   - product_code: LN_SME_WC
     name: SME Working Capital Loan
     family: loan
     take_up: { sme: 0.40 }
+    requires_any: [CA_BIZ]
+    terms:
+      # Multiple of monthly business turnover.
+      amount_income_multiple: { median: 1.2, sigma: 0.7 }
+      term_months: { values: [6, 12, 18, 24], weights: [0.25, 0.35, 0.2, 0.2] }
+      annual_rate_pct: { min: 28, max: 36 }
 
-# Services attached to a customer rather than an account.
+# Services attached to a customer rather than an account. Take-up is scaled by the home
+# branch's digital_index (capped at 1).
 services:
   mobile_banking: { civil_servant: 0.60, corporate_employee: 0.80, market_trader: 0.45, susu_saver: 0.25, sme: 0.70 }
   momo_wallet_link: { civil_servant: 0.55, corporate_employee: 0.65, market_trader: 0.70, susu_saver: 0.50, sme: 0.60 }
+
+# ---------------------------------------------------------------- holdings
+holdings:
+  # Mobile money wallets registered on the customer's own phone number (else another line).
+  momo_same_number_share: 0.85
+  # Loan principals, deposit amounts, and credit limits are rounded to this many cedis.
+  contract_amount_rounding_ghs: 50
+  # Cards, loans, and fixed deposits open no earlier than this many months before
+  # start_date, so the pre-window book is recent and most contracts are live in the window.
+  dependent_open_lookback_months: 24

@@ -15,6 +15,7 @@ from generator.world.names import (
     sample_business_names,
     sample_person_names,
 )
+from generator.world.sampling import uniform_dates
 from isbank.reference.ghana import MOBILE_PREFIXES
 
 _DAYS_PER_YEAR = 365.25
@@ -115,8 +116,7 @@ def _sample_join_dates(
     )
     low = np.where(pre_window, np.maximum(opened, earliest), np.maximum(opened, start))
     high = np.where(pre_window, start - _ONE_DAY, today)
-    span = (high - low).astype("int64") + 1
-    return low + (rng.random(len(branch_idx)) * span).astype("timedelta64[D]")
+    return uniform_dates(rng, low, high)
 
 
 def _sample_birth_dates(
