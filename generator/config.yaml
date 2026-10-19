@@ -578,3 +578,51 @@ projectors:
     device_os: { Android: 0.82, iOS: 0.18 }
     # App 3.0 adds a biometric_used field to every event from this date (schema drift).
     app_v3_from: 2024-06-01
+  loan_origination:
+    # Declined applications, as a share of the number of approved (disbursed) loans.
+    declined_application_share: 0.35
+    application_lead_days: { min: 1, max: 14 }
+    # Share decided the same day they are filed; the rest 1-5 days later (two extract rows).
+    same_day_decision_share: 0.6
+    ghana_card_formats: { no_dashes: 0.5, canonical: 0.3, spaced: 0.2 }
+    # Schema drift: monthly_income is renamed net_monthly_income in extracts from this date.
+    rename_income_column_from: 2024-07-01
+    duplicate_file_share: 0.02
+  crm:
+    contact_created_lag_days: { min: 0, max: 60 }
+    missing_email_share: 0.3
+    name_typo_share: 0.08
+    phone_formats: { national: 0.5, international: 0.35, spaced: 0.15 }
+    # Schema drift: preferred_channel column added to contact extracts from this date.
+    add_preferred_channel_from: 2024-03-01
+    nps_surveys_per_customer_per_year: 0.25
+    campaigns_per_year: 6
+    campaign_reach_share: 0.3
+  general_ledger:
+    # Monthly opex per 1,000 active customers at a branch, in start_date prices.
+    opex_per_1000_customers_ghs: { staff: 150000, rent_utilities: 60000, other: 40000 }
+    opex_annual_growth: 0.18
+    opex_noise_sd: 0.08
+    # Treasury income: share of deposits invested (e.g. in T-bills) and their yield.
+    treasury: { invested_share: 0.6, annual_yield: 0.22 }
+    # Months with a deliberate small break between GL fee income and the core.
+    reconciliation_break_share: 0.1
+    break_amount_ghs: { min: 50, max: 900 }
+  credit_bureau:
+    # Weekly report, every Monday.
+    score_range: { min: 300, max: 850 }
+    score_noise_sd: 45
+    external_facilities_mean: 0.8
+    enquiries_mean: 0.6
+  compliance:
+    pep_customer_share: 0.002
+    sanctions_entries: 250
+    pep_entries: 400
+    # Non-customer list entries sharing a common customer surname + first name (false hits).
+    near_miss_share: 0.15
+    new_entries_per_month: 6
+  reference_data:
+    fx:
+      USD: { start: 11.2, drift_per_day: 0.0002, vol_per_day: 0.006 }
+      EUR: { start: 12.0, drift_per_day: 0.0002, vol_per_day: 0.006 }
+      GBP: { start: 13.6, drift_per_day: 0.0002, vol_per_day: 0.0065 }

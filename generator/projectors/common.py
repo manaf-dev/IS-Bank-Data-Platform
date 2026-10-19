@@ -26,11 +26,15 @@ class SourceBatch:
     system: str
     tables: dict[str, pd.DataFrame] = field(default_factory=dict)
     formats: dict[str, str] = field(default_factory=dict)
+    # Per table: {"partition_by": column} to write one file per value of that column, plus
+    # any format-specific options (e.g. fixed-width layouts, duplicate file deliveries).
+    meta: dict[str, dict] = field(default_factory=dict)
 
-    def add(self, name: str, frame: pd.DataFrame, fmt: str) -> None:
-        """Register a table and the format an emitter should write it in."""
+    def add(self, name: str, frame: pd.DataFrame, fmt: str, **meta) -> None:
+        """Register a table, the format an emitter should write it in, and options."""
         self.tables[name] = frame.reset_index(drop=True)
         self.formats[name] = fmt
+        self.meta[name] = meta
 
 
 def stable_uniform(seed: int, salt: str, ids: np.ndarray | pd.Series) -> np.ndarray:
