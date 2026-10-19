@@ -4,4 +4,4 @@ Short records of significant decisions: context, options, decision, consequences
 
 | ADR | Title | Status |
 |---|---|---|
-| [0001](0001-repo-layout-and-fabric-git-integration.md) | Repository layout, tooling, and Fabric Git integration | Proposed |
+| [0001](0001-repo-layout-and-fabric-git-integration.md) | Repository layout, tooling, and Fabric Git integration | Accepted |
