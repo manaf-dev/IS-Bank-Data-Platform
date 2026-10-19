@@ -310,6 +310,9 @@ class WorldConfig:
     behaviour: BehaviourParams
     signals: SignalParams
     customer_changes: ChangeParams
+    # Projector settings are nested and system-specific; each projector reads its own
+    # section and validates what it uses.
+    projectors: dict[str, dict[str, Any]]
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH, profile: str = "dev") -> WorldConfig:
@@ -548,6 +551,7 @@ def _build(raw: dict[str, Any], profile: str) -> WorldConfig:
             marriage_surname_per_year=float(raw["customer_changes"]["marriage_surname_per_year"]),
             marriage_age=_range(raw["customer_changes"]["marriage_age"]),
         ),
+        projectors=raw["projectors"],
     )
 
 

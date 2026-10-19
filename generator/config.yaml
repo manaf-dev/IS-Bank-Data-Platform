@@ -548,3 +548,33 @@ customer_changes:
   # Women aged 20-40 marrying (and taking a new surname), per year; at most once.
   marriage_surname_per_year: 0.012
   marriage_age: { min: 20, max: 40 }
+
+# ---------------------------------------------------------------- projectors (source systems)
+# How each simulated source system presents the world, including its deliberate flaws.
+# All decisions are stable per record (hash of seed + record id), so reruns are identical.
+projectors:
+  core_banking:
+    # Same person registered twice (a second CIF opened later at another branch).
+    duplicate_customer_share: 0.015
+    duplicate_name_typo_share: 0.5
+    # Of a duplicated customer's accounts opened after the duplicate CIF, share booked on it.
+    duplicate_account_share: 0.5
+    missing_email_share: 0.10
+    missing_digital_address_share: 0.05
+    missing_ghana_card_share: 0.02
+    placeholder_dob_share: 0.003
+    placeholder_dob: 1900-01-01
+    double_posting_share: 0.0005
+  card_switch:
+    late_event_share: 0.02
+    late_minutes: { min: 5, max: 4320 }
+    duplicate_delivery_share: 0.002
+  mobile_banking:
+    extra_logins_per_user_per_month: 3
+    failed_login_share: 0.03
+    takeover_failed_logins: { min: 1, max: 4 }
+    late_event_share: 0.01
+    late_minutes: { min: 2, max: 720 }
+    device_os: { Android: 0.82, iOS: 0.18 }
+    # App 3.0 adds a biometric_used field to every event from this date (schema drift).
+    app_v3_from: 2024-06-01
