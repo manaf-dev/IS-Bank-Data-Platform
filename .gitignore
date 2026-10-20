@@ -223,9 +223,10 @@ __marimo__/
 # IS Bank data platform
 # ------------------------------------------------------------------
 # Generated synthetic data is reproducible from config + seed: never commit it.
-data/
-output/
-answer_key/
+# Output folders are anchored to the repo root so package data dirs (e.g. generator/world/data) stay tracked.
+/data/
+/output/
+/answer_key/
 *.parquet
 *.csv
 *.jsonl

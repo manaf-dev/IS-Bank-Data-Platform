@@ -21,7 +21,8 @@ def test_generator_config_has_seed_and_profiles(repo_root: Path):
 
     assert isinstance(config["seed"], int)
     assert {"dev", "full"} <= config["profiles"].keys()
-    assert config["profiles"]["dev"]["customers"] < config["profiles"]["full"]["customers"]
+    profiles = config["profiles"]
+    assert profiles["dev"]["customers"]["count"] < profiles["full"]["customers"]["count"]
 
 
 def test_isbank_does_not_import_generator():

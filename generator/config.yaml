@@ -1,19 +1,628 @@
 # Single source of truth for every generator rate, fraction, noise level, and date window.
 # Nothing in generator code may hardcode these values.
 #
-# Values marked TODO are open questions in CLAUDE.md section 12: decide them, record
-# the decision in an ADR, then fill them in.
+# Reference data below (branches, segments, products) is a DRAFT for review: see ADR-0002.
+# All names are fictional; incomes are rough, illustrative GHS figures, not market data.
 
 seed: 20261019
 
 simulation:
-  start_date: null   # TODO: simulated history window (target about 3 years)
-  today: null        # TODO: simulated "today" date
+  # Three full calendar years, so each year has its own Christmas, Easter, and
+  # school-fees season. After `today`, daily ticks continue from the next day.
+  start_date: 2023-01-01
+  today: 2025-12-31
+  # The world is simulated up to end_date. Everything after `today` is the "future" that
+  # daily ticks reveal one day at a time, so a tick is deterministic and idempotent.
+  end_date: 2026-12-31
   currency: GHS
 
-# Select with --profile (default: dev). Profiles override the base values above.
+# Select with --profile (default: dev). A profile is deep-merged over the base values.
 profiles:
   dev:
-    customers: 2000
+    customers: { count: 2000 }
   full:
-    customers: 50000
+    customers: { count: 50000 }
+
+# ---------------------------------------------------------------- customers
+customers:
+  count: 2000
+  # Share of customers (at branches open before start_date) who joined before the window.
+  pre_window_share: 0.60
+  earliest_join_date: 2005-01-01
+  # Age when the customer (or SME owner) joined: truncated normal.
+  age_at_join: { mean: 36, sd: 11, min: 18, max: 80 }
+  female_share: 0.48
+  email_share: { individual: 0.45, business: 0.90 }
+  # Addresses with a numeric suffix, e.g. kwame.mensah84@...
+  email_digit_suffix_share: 0.50
+  # RFC 2606 reserved domains, so synthetic addresses can never reach a real mailbox.
+  email_domains: { example.com: 0.6, example.org: 0.25, example.net: 0.15 }
+  mobile_network_share: { MTN: 0.65, Telecel: 0.22, AirtelTigo: 0.13 }
+  names:
+    # Rank-based popularity: weight of the k-th listed name is 1 / k**exponent.
+    popularity_exponent: 0.7
+    # Akan customers whose name includes their birth-weekday name.
+    akan_day_name_rate: 0.75
+    # Of those, the share where the day name is the first name (else the middle name).
+    day_name_first_share: 0.45
+    # Customers with any middle name at all (day names aside).
+    middle_name_rate: 0.35
+    # Non-Akan customers whose first name is a common (mostly Christian/English) given name
+    # rather than one from their group's own list.
+    common_given_share: { ewe: 0.45, ga_dangme: 0.45, northern: 0.15 }
+    # SME names of the "<Surname> & Sons" form rather than "<prefix> <trade> <suffix>".
+    business_family_firm_share: 0.25
+  # Ethnic-group weights by branch region; drives which name lists are sampled.
+  ethnicity_by_region:
+    Greater Accra: { akan: 0.45, ga_dangme: 0.25, ewe: 0.20, northern: 0.10 }
+    Ashanti: { akan: 0.80, ga_dangme: 0.03, ewe: 0.05, northern: 0.12 }
+    Western: { akan: 0.80, ga_dangme: 0.05, ewe: 0.08, northern: 0.07 }
+    Central: { akan: 0.85, ga_dangme: 0.04, ewe: 0.06, northern: 0.05 }
+    Northern: { akan: 0.10, ga_dangme: 0.02, ewe: 0.03, northern: 0.85 }
+    Upper East: { akan: 0.05, ga_dangme: 0.01, ewe: 0.02, northern: 0.92 }
+    Volta: { akan: 0.10, ga_dangme: 0.04, ewe: 0.82, northern: 0.04 }
+    Bono: { akan: 0.82, ga_dangme: 0.01, ewe: 0.03, northern: 0.14 }
+    Eastern: { akan: 0.70, ga_dangme: 0.12, ewe: 0.12, northern: 0.06 }
+
+# ---------------------------------------------------------------- branches
+# customer_share: share of customers whose home branch this is (sums to 1).
+# income_index:   relative income level of the catchment (1.0 = bank average).
+# digital_index:  relative propensity to use mobile/online banking (1.0 = bank average).
+# gps_district:   Ghana Post GPS district prefix used for customers' digital addresses
+#                 (approximate; illustrative only).
+# segment_mix:    optional override of the bank-wide segment mix for this branch.
+branches:
+  - branch_code: BR001
+    name: Accra Makola
+    city: Accra
+    region: Greater Accra
+    gps_district: GA
+    opened_on: 2008-03-03
+    customer_share: 0.10
+    income_index: 0.90
+    digital_index: 0.90
+    segment_mix:
+      civil_servant: 0.10
+      corporate_employee: 0.12
+      market_trader: 0.48
+      susu_saver: 0.18
+      sme: 0.12
+  - branch_code: BR002
+    name: Accra Osu
+    city: Accra
+    region: Greater Accra
+    gps_district: GA
+    opened_on: 2009-06-01
+    customer_share: 0.08
+    income_index: 1.40
+    digital_index: 1.35
+  - branch_code: BR003
+    name: Accra Achimota
+    city: Accra
+    region: Greater Accra
+    gps_district: GA
+    opened_on: 2012-09-03
+    customer_share: 0.08
+    income_index: 1.10
+    digital_index: 1.15
+  - branch_code: BR004
+    name: Accra Madina
+    city: Accra
+    region: Greater Accra
+    gps_district: GA
+    # Opens inside the simulation window: customers before this date bank elsewhere.
+    opened_on: 2024-06-03
+    customer_share: 0.07
+    income_index: 1.00
+    digital_index: 1.10
+  - branch_code: BR005
+    name: Accra Airport City
+    city: Accra
+    region: Greater Accra
+    gps_district: GA
+    opened_on: 2015-02-02
+    customer_share: 0.06
+    income_index: 1.60
+    digital_index: 1.50
+    segment_mix:
+      civil_servant: 0.10
+      corporate_employee: 0.50
+      market_trader: 0.05
+      susu_saver: 0.05
+      sme: 0.30
+  - branch_code: BR006
+    name: Tema Community 1
+    city: Tema
+    region: Greater Accra
+    gps_district: GT
+    opened_on: 2010-04-06
+    customer_share: 0.08
+    income_index: 1.20
+    digital_index: 1.10
+  - branch_code: BR007
+    name: Kumasi Adum
+    city: Kumasi
+    region: Ashanti
+    gps_district: AK
+    opened_on: 2008-03-03
+    customer_share: 0.10
+    income_index: 1.00
+    digital_index: 1.00
+  - branch_code: BR008
+    name: Kumasi Suame
+    city: Kumasi
+    region: Ashanti
+    gps_district: AK
+    opened_on: 2013-07-01
+    customer_share: 0.07
+    income_index: 0.85
+    digital_index: 0.85
+    segment_mix:
+      civil_servant: 0.08
+      corporate_employee: 0.10
+      market_trader: 0.45
+      susu_saver: 0.17
+      sme: 0.20
+  - branch_code: BR009
+    name: Takoradi Market Circle
+    city: Takoradi
+    region: Western
+    gps_district: WS
+    opened_on: 2011-05-03
+    customer_share: 0.07
+    income_index: 1.05
+    digital_index: 0.95
+  - branch_code: BR010
+    name: Tamale Central
+    city: Tamale
+    region: Northern
+    gps_district: NT
+    opened_on: 2012-02-01
+    customer_share: 0.06
+    income_index: 0.70
+    digital_index: 0.75
+  - branch_code: BR011
+    name: Cape Coast
+    city: Cape Coast
+    region: Central
+    gps_district: CC
+    opened_on: 2011-10-03
+    customer_share: 0.05
+    income_index: 0.85
+    digital_index: 0.90
+  - branch_code: BR012
+    name: Ho
+    city: Ho
+    region: Volta
+    gps_district: VH
+    opened_on: 2014-03-03
+    customer_share: 0.045
+    income_index: 0.80
+    digital_index: 0.85
+  - branch_code: BR013
+    name: Sunyani
+    city: Sunyani
+    region: Bono
+    gps_district: BS
+    opened_on: 2014-08-04
+    customer_share: 0.045
+    income_index: 0.85
+    digital_index: 0.85
+  - branch_code: BR014
+    name: Koforidua
+    city: Koforidua
+    region: Eastern
+    gps_district: EN
+    opened_on: 2013-01-07
+    customer_share: 0.05
+    income_index: 0.85
+    digital_index: 0.90
+  - branch_code: BR015
+    name: Bolgatanga
+    city: Bolgatanga
+    region: Upper East
+    gps_district: UB
+    opened_on: 2016-05-02
+    customer_share: 0.04
+    income_index: 0.60
+    digital_index: 0.65
+
+# ---------------------------------------------------------------- customer segments
+# Bank-wide archetype mix (sums to 1); branches may override it above.
+# monthly_income_ghs: lognormal median and sigma, before the branch income_index is applied.
+#   For `sme` this is monthly business turnover rather than personal income.
+# income_regularity: 1.0 = same amount on a fixed pay day; lower = more irregular inflows.
+# cash_intensity:    share of activity done in cash at the branch rather than electronically.
+segments:
+  mix:
+    civil_servant: 0.20
+    corporate_employee: 0.22
+    market_trader: 0.28
+    susu_saver: 0.18
+    sme: 0.12
+  archetypes:
+    civil_servant:
+      customer_type: individual
+      monthly_income_ghs: { median: 3500, sigma: 0.35 }
+      income_regularity: 0.95
+      cash_intensity: 0.25
+    corporate_employee:
+      customer_type: individual
+      monthly_income_ghs: { median: 5500, sigma: 0.55 }
+      income_regularity: 0.95
+      cash_intensity: 0.15
+    market_trader:
+      customer_type: individual
+      monthly_income_ghs: { median: 2800, sigma: 0.80 }
+      income_regularity: 0.30
+      cash_intensity: 0.70
+    susu_saver:
+      customer_type: individual
+      monthly_income_ghs: { median: 1500, sigma: 0.60 }
+      income_regularity: 0.50
+      cash_intensity: 0.75
+    sme:
+      customer_type: business
+      monthly_income_ghs: { median: 30000, sigma: 1.00 }
+      income_regularity: 0.40
+      cash_intensity: 0.45
+
+# ---------------------------------------------------------------- products
+# take_up:      probability a customer of that segment holds the product at some point.
+#               Segments not listed are not eligible.
+# requires_any: the product can only be held alongside one of these (e.g. a card needs an
+#               account to draw from); the earliest such account becomes its linked account.
+# terms:        contract amount as a lognormal multiple of monthly income, tenor, and an
+#               annual rate drawn uniformly from [min, max]. Illustrative figures only.
+products:
+  # Deposits
+  - product_code: CA_PER
+    name: Personal Current Account
+    family: deposit
+    take_up: { civil_servant: 0.90, corporate_employee: 0.95, market_trader: 0.55, susu_saver: 0.20 }
+  - product_code: CA_BIZ
+    name: Business Current Account
+    family: deposit
+    take_up: { market_trader: 0.15, sme: 1.00 }
+  - product_code: SA_REG
+    name: Regular Savings Account
+    family: deposit
+    take_up: { civil_servant: 0.55, corporate_employee: 0.60, market_trader: 0.50, susu_saver: 0.40 }
+  - product_code: SA_SUSU
+    name: Susu Savings Account
+    family: deposit
+    take_up: { market_trader: 0.30, susu_saver: 0.95 }
+  - product_code: FD_TERM
+    name: Fixed Deposit (3/6/12 months)
+    family: deposit
+    take_up: { civil_servant: 0.10, corporate_employee: 0.18, market_trader: 0.05, sme: 0.20 }
+    requires_any: [CA_PER, SA_REG, CA_BIZ]
+    terms:
+      amount_income_multiple: { median: 2.0, sigma: 0.8 }
+      term_months: { values: [3, 6, 12], weights: [0.4, 0.3, 0.3] }
+      annual_rate_pct: { min: 16, max: 24 }
+  # Cards
+  - product_code: DC_DEBIT
+    name: Debit Card
+    family: card
+    take_up: { civil_servant: 0.80, corporate_employee: 0.92, market_trader: 0.40, susu_saver: 0.15, sme: 0.50 }
+    requires_any: [CA_PER, SA_REG, SA_SUSU, CA_BIZ]
+  - product_code: CC_CLASSIC
+    name: Classic Credit Card
+    family: card
+    take_up: { civil_servant: 0.04, corporate_employee: 0.12, sme: 0.05 }
+    requires_any: [CA_PER, CA_BIZ]
+    terms:
+      # For a credit card the contract amount is the credit limit.
+      amount_income_multiple: { median: 1.0, sigma: 0.4 }
+      annual_rate_pct: { min: 30, max: 42 }
+  # Lending
+  - product_code: LN_PERS
+    name: Personal Loan
+    family: loan
+    take_up: { civil_servant: 0.30, corporate_employee: 0.22 }
+    requires_any: [CA_PER]
+    terms:
+      amount_income_multiple: { median: 6.0, sigma: 0.5 }
+      term_months: { values: [12, 24, 36, 48], weights: [0.2, 0.35, 0.3, 0.15] }
+      annual_rate_pct: { min: 26, max: 34 }
+  - product_code: LN_SALADV
+    name: Salary Advance
+    family: loan
+    take_up: { civil_servant: 0.20, corporate_employee: 0.15 }
+    requires_any: [CA_PER]
+    terms:
+      amount_income_multiple: { median: 0.5, sigma: 0.3 }
+      term_months: { values: [1, 2, 3], weights: [0.5, 0.3, 0.2] }
+      annual_rate_pct: { min: 30, max: 40 }
+  - product_code: LN_MICRO
+    name: Trader Micro Loan
+    family: loan
+    take_up: { market_trader: 0.25, susu_saver: 0.10 }
+    requires_any: [CA_PER, SA_REG, SA_SUSU, CA_BIZ]
+    terms:
+      amount_income_multiple: { median: 1.5, sigma: 0.6 }
+      term_months: { values: [3, 6, 12], weights: [0.3, 0.4, 0.3] }
+      annual_rate_pct: { min: 36, max: 48 }
+  - product_code: LN_SME_WC
+    name: SME Working Capital Loan
+    family: loan
+    take_up: { sme: 0.40 }
+    requires_any: [CA_BIZ]
+    terms:
+      # Multiple of monthly business turnover.
+      amount_income_multiple: { median: 1.2, sigma: 0.7 }
+      term_months: { values: [6, 12, 18, 24], weights: [0.25, 0.35, 0.2, 0.2] }
+      annual_rate_pct: { min: 28, max: 36 }
+
+# Services attached to a customer rather than an account. Take-up is scaled by the home
+# branch's digital_index (capped at 1).
+services:
+  mobile_banking: { civil_servant: 0.60, corporate_employee: 0.80, market_trader: 0.45, susu_saver: 0.25, sme: 0.70 }
+  momo_wallet_link: { civil_servant: 0.55, corporate_employee: 0.65, market_trader: 0.70, susu_saver: 0.50, sme: 0.60 }
+
+# ---------------------------------------------------------------- holdings
+holdings:
+  # Mobile money wallets registered on the customer's own phone number (else another line).
+  momo_same_number_share: 0.85
+  # Loan principals, deposit amounts, and credit limits are rounded to this many cedis.
+  contract_amount_rounding_ghs: 50
+  # Cards, loans, and fixed deposits open no earlier than this many months before
+  # start_date, so the pre-window book is recent and most contracts are live in the window.
+  dependent_open_lookback_months: 24
+
+# ---------------------------------------------------------------- merchants
+merchants:
+  per_1000_customers: 40
+  # Share of a customer's card purchases made at merchants in their home branch's city.
+  local_share: 0.85
+  # channel: where the category trades (pos, online, or both).
+  categories:
+    grocery: { mcc: "5411", weight: 0.22, channel: pos, label: Supermarket }
+    fuel: { mcc: "5541", weight: 0.12, channel: pos, label: Filling Station }
+    restaurant: { mcc: "5812", weight: 0.12, channel: pos, label: Restaurant }
+    pharmacy: { mcc: "5912", weight: 0.08, channel: pos, label: Pharmacy }
+    clothing: { mcc: "5651", weight: 0.08, channel: both, label: Fashion House }
+    electronics: { mcc: "5732", weight: 0.06, channel: both, label: Electronics }
+    hardware: { mcc: "5251", weight: 0.06, channel: pos, label: Hardware }
+    airtime_data: { mcc: "4814", weight: 0.10, channel: online, label: Telecom Top-Up }
+    betting: { mcc: "7995", weight: 0.06, channel: online, label: Sports Betting }
+    travel: { mcc: "4722", weight: 0.04, channel: online, label: Travel Agency }
+    hotel: { mcc: "7011", weight: 0.03, channel: both, label: Hotel }
+    education: { mcc: "8220", weight: 0.03, channel: both, label: School }
+
+# ---------------------------------------------------------------- behaviour
+# Monthly money flows. Inflows and spending are expressed relative to monthly income, so
+# balances stay plausible at any income level. Declined debits (insufficient funds) are
+# kept with status DECLINED; they become card-switch response codes and missed payments.
+behaviour:
+  # Per-customer multiplier on discretionary event counts (lognormal), plus a dormant share.
+  activity: { median: 0.8, sigma: 0.5, dormant_share: 0.10, dormant_multiplier: 0.05 }
+  # Balance held at start_date by accounts opened before the window, as income multiple.
+  opening_balance_income_multiple: { median: 1.2, sigma: 0.7 }
+  # Share of a month's expected income a customer spends (truncated normal per customer).
+  spend_ratio: { mean: 0.88, sd: 0.07, min: 0.5, max: 1.0 }
+  # Month-to-month variation of salary and business income.
+  income_noise_sd: 0.05
+  # Pay day range per salaried segment (one fixed day per customer, clamped to month end).
+  salary_day:
+    civil_servant: { min: 20, max: 25 }
+    corporate_employee: { min: 25, max: 31 }
+  # Non-salaried segments receive income as several irregular inflows (Poisson mean/month).
+  irregular_inflows:
+    market_trader: { events: 2, channels: { BRANCH_CASH_DEPOSIT: 0.6, MOMO_TO_BANK: 0.3, TRANSFER_IN: 0.1 } }
+    susu_saver: { events: 3, channels: { BRANCH_CASH_DEPOSIT: 0.8, MOMO_TO_BANK: 0.2 } }
+    sme: { events: 3, channels: { BRANCH_CASH_DEPOSIT: 0.4, MOMO_TO_BANK: 0.2, TRANSFER_IN: 0.4 } }
+  # Discretionary debits: Poisson mean per month and channel mix per segment. Channels the
+  # customer can't use yet (no card, no MoMo link, no mobile banking) fall back to branch.
+  spending:
+    civil_servant:
+      events: 3
+      channels: { ATM_WITHDRAWAL: 0.30, BRANCH_WITHDRAWAL: 0.10, POS_PURCHASE: 0.20, ONLINE_PURCHASE: 0.05, BANK_TO_MOMO: 0.20, TRANSFER_OUT: 0.05, BILL_PAYMENT: 0.10 }
+    corporate_employee:
+      events: 4
+      channels: { ATM_WITHDRAWAL: 0.20, BRANCH_WITHDRAWAL: 0.05, POS_PURCHASE: 0.30, ONLINE_PURCHASE: 0.12, BANK_TO_MOMO: 0.15, TRANSFER_OUT: 0.08, BILL_PAYMENT: 0.10 }
+    market_trader:
+      events: 2
+      channels: { ATM_WITHDRAWAL: 0.15, BRANCH_WITHDRAWAL: 0.40, POS_PURCHASE: 0.05, ONLINE_PURCHASE: 0.02, BANK_TO_MOMO: 0.30, TRANSFER_OUT: 0.05, BILL_PAYMENT: 0.03 }
+    susu_saver:
+      events: 1
+      channels: { ATM_WITHDRAWAL: 0.10, BRANCH_WITHDRAWAL: 0.60, POS_PURCHASE: 0.02, ONLINE_PURCHASE: 0.01, BANK_TO_MOMO: 0.25, TRANSFER_OUT: 0.01, BILL_PAYMENT: 0.01 }
+    sme:
+      events: 4
+      channels: { ATM_WITHDRAWAL: 0.05, BRANCH_WITHDRAWAL: 0.20, POS_PURCHASE: 0.10, ONLINE_PURCHASE: 0.05, BANK_TO_MOMO: 0.15, TRANSFER_OUT: 0.35, BILL_PAYMENT: 0.10 }
+  # Account the customer transacts through: the first one they hold, in this order.
+  operating_account_priority: [CA_BIZ, CA_PER, SA_SUSU, SA_REG]
+  # Share of each month's unspent income swept to a regular savings account, if held.
+  savings_sweep_share: 0.5
+  # Spending (and trader/SME inflow) multiplier by calendar month: Christmas, school fees
+  # in January and September, Easter around April.
+  seasonality: { 1: 1.10, 2: 0.95, 3: 1.00, 4: 1.05, 5: 0.95, 6: 0.95, 7: 0.95, 8: 1.00, 9: 1.15, 10: 0.95, 11: 1.00, 12: 1.30 }
+  # Hour-of-day weights for electronic channels (00:00 to 23:00).
+  hour_weights: [1, 0.5, 0.3, 0.3, 0.5, 1, 3, 5, 7, 8, 8, 8, 9, 8, 8, 8, 8, 9, 9, 8, 7, 5, 3, 2]
+  # Branch counters are open these hours, Monday to Saturday.
+  branch_hours: { open: 8, close: 17 }
+  credit_card:
+    # Share of eligible card purchases put on the credit card rather than the debit card.
+    purchase_share: 0.5
+    repayment_day: 15
+    pay_full_share: 0.6
+    min_payment_pct: 10
+  monthly_fee_ghs: { CA_PER: 10, CA_BIZ: 25 }
+  counterparty_banks: [Volta Commercial Bank, Ashanti Trust Bank, Coastline Bank, Savannah Savings & Loans, Gold Coast Merchant Bank, Sahel Rural Bank]
+  billers: { electricity: 0.35, water: 0.15, pay_tv: 0.20, school_fees: 0.15, insurance: 0.15 }
+
+# ---------------------------------------------------------------- planted signals
+# Every signal is probabilistic: labels come from a true probability plus noise, so models
+# have something real to find without it being trivially separable.
+signals:
+  # Illustrative macro-stress index by quarter (1.0 = high stress, e.g. high inflation in
+  # early 2023, easing afterwards). Raises default probability for loans opened then.
+  macro_stress_by_quarter: { 2023Q1: 1.0, 2023Q2: 0.95, 2023Q3: 0.85, 2023Q4: 0.75, 2024Q1: 0.65, 2024Q2: 0.6, 2024Q3: 0.55, 2024Q4: 0.5, 2025Q1: 0.45, 2025Q2: 0.45, 2025Q3: 0.4, 2025Q4: 0.4, 2026Q1: 0.4, 2026Q2: 0.35, 2026Q3: 0.35, 2026Q4: 0.35 }
+  # Stress applied to loans opened before the window.
+  pre_window_macro_stress: 0.8
+
+  default:
+    # logit(p) = intercept + dti * DTI + stress * macro + income * log(income / median)
+    #            + segment effect + N(0, noise_sd)
+    intercept: -3.7
+    dti: 4.0
+    stress: 1.2
+    log_income: -0.5
+    segment_effect: { civil_servant: -0.6, corporate_employee: -0.3, market_trader: 0.4, susu_saver: 0.3, sme: 0.5 }
+    noise_sd: 0.6
+    # A defaulting borrower's income falls to this share from a shock date inside the loan.
+    shock_income_share: { min: 0.05, max: 0.35 }
+    shock_spend_share: 0.6
+    # The shock (business loss, medical emergency) takes this share of the operating
+    # balance in one large outflow on the shock date.
+    shock_balance_drain_share: 0.8
+    # Earliest shock: this many months after the loan opens.
+    shock_min_months: 2
+    # Latest shock, as a share of the loan term (defaults cluster early in a loan's life).
+    shock_max_term_share: 0.5
+
+  complaints:
+    # Poisson rate per customer per year; categories with weights.
+    per_customer_per_year: 0.12
+    categories: { failed_transaction: 0.3, card_issue: 0.15, charges_dispute: 0.2, service_quality: 0.2, loan_query: 0.1, fraud_report: 0.05 }
+    resolved_share: 0.75
+    resolution_days: { min: 1, max: 30 }
+    # Share of fraud victims who complain about it (1-5 days after the first fraud event).
+    fraud_report_share: 0.7
+
+  churn:
+    # Monthly hazard = base[segment] * exp(unresolved_complaint * x + low_activity * y + N(0, noise_sd)).
+    base_monthly_hazard: { civil_servant: 0.003, corporate_employee: 0.005, market_trader: 0.004, susu_saver: 0.004, sme: 0.003 }
+    unresolved_complaint: 1.6
+    low_activity: 0.7
+    low_activity_threshold: 0.5
+    noise_sd: 0.4
+    # Activity and income ramp down over this many months before the churn date.
+    ramp_months: { min: 2, max: 6 }
+    ramp_floor: 0.2
+    # Share of the operating balance moved out in the closing transfer.
+    closing_transfer_share: 0.95
+    # Earliest churn date: this many months into the window (so the ramp is observable).
+    earliest_month: 4
+
+  beneficiaries:
+    # Each customer has a few regular payees at other banks.
+    per_customer: { min: 1, max: 4 }
+    # Share of legitimate transfers to a one-off payee rather than a regular one.
+    new_beneficiary_share: 0.1
+  devices:
+    # Mobile banking devices per enrolled customer.
+    per_customer_weights: { 1: 0.8, 2: 0.18, 3: 0.02 }
+  legit_night_purchase_share: 0.03
+
+  fraud:
+    card_testing:
+      monthly_victims_per_1000_cards: 0.6
+      probes: { min: 5, max: 15 }
+      probe_amount_ghs: { min: 1, max: 10 }
+      probe_window_minutes: 60
+      cashout_income_multiple: { min: 0.4, max: 1.5 }
+    night_geo_jump:
+      monthly_victims_per_1000_cards: 0.4
+      purchases: { min: 2, max: 6 }
+      hours: [0, 1, 2, 3, 4]
+      amount_income_multiple: { min: 0.05, max: 0.4 }
+    account_takeover:
+      rings_per_year_per_10k_customers: 2.0
+      victims: { min: 4, max: 12 }
+      beneficiaries: { min: 1, max: 3 }
+      devices: { min: 1, max: 2 }
+      campaign_days: 21
+      transfers_per_victim: { min: 1, max: 3 }
+      transfer_income_multiple: { min: 0.5, max: 2.5 }
+      night_share: 0.6
+
+# ---------------------------------------------------------------- attribute changes
+# Changes to customer details after joining: the history SCD2 in Silver must capture.
+customer_changes:
+  # Poisson rate per customer per year of membership.
+  per_customer_per_year: { phone_number: 0.04, digital_address: 0.06, email: 0.05 }
+  # Share of digital-address moves that stay within the home district.
+  local_move_share: 0.8
+  # Women aged 20-40 marrying (and taking a new surname), per year; at most once.
+  marriage_surname_per_year: 0.012
+  marriage_age: { min: 20, max: 40 }
+
+# ---------------------------------------------------------------- projectors (source systems)
+# How each simulated source system presents the world, including its deliberate flaws.
+# All decisions are stable per record (hash of seed + record id), so reruns are identical.
+projectors:
+  core_banking:
+    # Same person registered twice (a second CIF opened later at another branch).
+    duplicate_customer_share: 0.015
+    duplicate_name_typo_share: 0.5
+    # Of a duplicated customer's accounts opened after the duplicate CIF, share booked on it.
+    duplicate_account_share: 0.5
+    missing_email_share: 0.10
+    missing_digital_address_share: 0.05
+    missing_ghana_card_share: 0.02
+    placeholder_dob_share: 0.003
+    placeholder_dob: 1900-01-01
+    double_posting_share: 0.0005
+  card_switch:
+    late_event_share: 0.02
+    late_minutes: { min: 5, max: 4320 }
+    duplicate_delivery_share: 0.002
+  mobile_banking:
+    extra_logins_per_user_per_month: 3
+    failed_login_share: 0.03
+    takeover_failed_logins: { min: 1, max: 4 }
+    late_event_share: 0.01
+    late_minutes: { min: 2, max: 720 }
+    device_os: { Android: 0.82, iOS: 0.18 }
+    # App 3.0 adds a biometric_used field to every event from this date (schema drift).
+    app_v3_from: 2024-06-01
+  loan_origination:
+    # Declined applications, as a share of the number of approved (disbursed) loans.
+    declined_application_share: 0.35
+    application_lead_days: { min: 1, max: 14 }
+    # Share decided the same day they are filed; the rest 1-5 days later (two extract rows).
+    same_day_decision_share: 0.6
+    ghana_card_formats: { no_dashes: 0.5, canonical: 0.3, spaced: 0.2 }
+    # Schema drift: monthly_income is renamed net_monthly_income in extracts from this date.
+    rename_income_column_from: 2024-07-01
+    duplicate_file_share: 0.02
+  crm:
+    contact_created_lag_days: { min: 0, max: 60 }
+    missing_email_share: 0.3
+    name_typo_share: 0.08
+    phone_formats: { national: 0.5, international: 0.35, spaced: 0.15 }
+    # Schema drift: preferred_channel column added to contact extracts from this date.
+    add_preferred_channel_from: 2024-03-01
+    nps_surveys_per_customer_per_year: 0.25
+    campaigns_per_year: 6
+    campaign_reach_share: 0.3
+  general_ledger:
+    # Monthly opex per 1,000 active customers at a branch, in start_date prices.
+    opex_per_1000_customers_ghs: { staff: 150000, rent_utilities: 60000, other: 40000 }
+    opex_annual_growth: 0.18
+    opex_noise_sd: 0.08
+    # Treasury income: share of deposits invested (e.g. in T-bills) and their yield.
+    treasury: { invested_share: 0.6, annual_yield: 0.22 }
+    # Months with a deliberate small break between GL fee income and the core.
+    reconciliation_break_share: 0.1
+    break_amount_ghs: { min: 50, max: 900 }
+  credit_bureau:
+    # Weekly report, every Monday.
+    score_range: { min: 300, max: 850 }
+    score_noise_sd: 45
+    external_facilities_mean: 0.8
+    enquiries_mean: 0.6
+  compliance:
+    pep_customer_share: 0.002
+    sanctions_entries: 250
+    pep_entries: 400
+    # Non-customer list entries sharing a common customer surname + first name (false hits).
+    near_miss_share: 0.15
+    new_entries_per_month: 6
+  reference_data:
+    fx:
+      USD: { start: 11.2, drift_per_day: 0.0002, vol_per_day: 0.006 }
+      EUR: { start: 12.0, drift_per_day: 0.0002, vol_per_day: 0.006 }
+      GBP: { start: 13.6, drift_per_day: 0.0002, vol_per_day: 0.0065 }

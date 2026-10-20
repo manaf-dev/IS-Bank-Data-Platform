@@ -1,6 +1,6 @@
 # ADR-0001: Repository layout, tooling, and Fabric Git integration
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-19
 
 ## Context
