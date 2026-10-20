@@ -52,6 +52,8 @@ def spark():
         .config("spark.sql.shuffle.partitions", "2")
         .config("spark.python.unix.domain.socket.enabled", "false")
         .config("spark.sql.session.timeZone", "UTC")
+        # Arrow avoids per-row Python datetime conversion, which fails on Windows before 1970.
+        .config("spark.sql.execution.arrow.pyspark.enabled", "true")
         .getOrCreate()
     )
     session.sparkContext.setLogLevel("ERROR")
