@@ -10,3 +10,4 @@ Short records of significant decisions: context, options, decision, consequences
 | [0004](0004-source-system-delivery.md) | How simulated source systems deliver data to Fabric | Accepted |
 | [0005](0005-simulation-horizon-and-daily-ticks.md) | Simulation horizon and deterministic daily ticks | Accepted |
 | [0006](0006-schema-enabled-lakehouses.md) | Schema-enabled lakehouses | Accepted |
+| [0007](0007-transform-engine-and-gold-store.md) | PySpark for transforms, a Warehouse for Gold, core SQL database deferred | Accepted |

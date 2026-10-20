@@ -12,6 +12,8 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "deltalake>=1.6.6",
+    "pyspark>=4.1,<4.2",
     "pytest>=8.3",
     "pytest-cov>=6.0",
     "ruff>=0.11",
@@ -64,6 +66,7 @@ ignore = [
     "D104", # package docstrings optional
     "D105", # magic-method docstrings optional
     "D107", # __init__ docstrings optional
+    "N812", # PySpark convention: from pyspark.sql import functions as F
 ]
 
 [tool.ruff.lint.pydocstyle]

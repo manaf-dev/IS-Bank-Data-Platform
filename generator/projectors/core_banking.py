@@ -103,6 +103,16 @@ def delta_batch(world: World, d: Delta) -> SourceBatch:
     return batch
 
 
+def _day(values: pd.Series) -> pd.Series:
+    """Dates as midnight timestamps (datetime64[s]).
+
+    Python date objects would make a column's Parquet type depend on its contents: a CDC file
+    whose dates are all empty would be written as an integer column, and readers that load it
+    together with the full extract would fail on the type mismatch.
+    """
+    return pd.to_datetime(values).dt.normalize().astype("datetime64[s]")
+
+
 class _Core:
     def __init__(self, world: World) -> None:
         self.world = world
@@ -271,14 +281,14 @@ class _Core:
                 "product_code": a["product_code"],
                 "branch_code": a["branch_code"],
                 "currency": "GHS",
-                "opened_date": a["opened_on"].dt.date,
+                "opened_date": _day(a["opened_on"]),
                 "status": np.where(closed, "CLOSED", "ACTIVE"),
-                "closed_date": a["closed_on"].dt.date if "closed_on" in a else None,
+                "closed_date": _day(a["closed_on"]) if "closed_on" in a else pd.NaT,
                 "linked_account_number": a["linked_account_id"].map(linked),
                 "contract_amount": a["contract_amount_pesewas"].astype("Float64") / 100,
                 "interest_rate_pct": a["annual_rate_bps"].astype("Float64") / 100,
                 "term_months": a["term_months"],
-                "maturity_date": a["maturity_date"].dt.date,
+                "maturity_date": _day(a["maturity_date"]),
             }
         )
 
@@ -294,7 +304,7 @@ class _Core:
                 ],
                 "pan_masked": [f"990001******{v:04d}" for v in last4],
                 "account_number": cards["linked_account_id"].map(linked).to_numpy(),
-                "issued_date": cards["opened_on"].dt.date.to_numpy(),
+                "issued_date": _day(cards["opened_on"]).to_numpy(),
                 "card_type": "DEBIT",
             }
         )
@@ -325,7 +335,7 @@ class _Core:
                     f"FT{v:011d}" for v in system_id(self.seed, "core:txn", p["posting_id"], 10**11)
                 ],
                 "account_number": p["account_id"].map(numbers).to_numpy(),
-                "value_date": p["posted_at"].dt.date.to_numpy(),
+                "value_date": _day(p["posted_at"]).to_numpy(),
                 "booking_ts": p["posted_at"].to_numpy(),
                 "txn_code": txn.map(TXN_CODE).to_numpy(),
                 "dr_cr": np.where(amount < 0, "DR", "CR"),
