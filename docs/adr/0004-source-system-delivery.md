@@ -22,3 +22,7 @@ Each simulated source system needs a delivery mechanism into the Dev workspace. 
 - Writing to the SQL database needs an authenticated connection from the local generator. Secrets stay in environment variables and are never committed.
 - Event files double as a replay source, so the streaming path in Phase 4 can be tested deterministically.
 - If Fabric cannot ingest from Google Drive cleanly, the CRM fallback is the lakehouse file drop. That would be recorded as an amendment to this ADR.
+
+## Amendment (2026-10-20): interim core banking landing
+
+Until the Fabric SQL database exists (a separate, costed approval), the core banking extracts the generator already writes as Parquet (`full_<date>` initial load, `cdc_<date>` daily upserts) are also uploaded to `lh_bronze/Files/landing/core_banking/`. This lets Phase 2 build Silver against core data straight away. When the SQL database and mirroring are in place, core ingestion switches to the mirrored tables and the interim files are retired. Because the files are regenerable from config and seed, nothing is lost by retiring them.
