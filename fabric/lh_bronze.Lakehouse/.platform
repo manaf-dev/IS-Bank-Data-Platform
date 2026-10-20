@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Lakehouse",
+    "displayName": "lh_bronze",
+    "description": "Bronze layer: raw, append-only source data exactly as received (IS Bank Data Platform)."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "930c08c9-25d9-b6ca-4ba6-f4dcbd959f9b"
+  }
+}
