@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_bronze_ingest",
+    "description": "Bronze: metadata-driven, idempotent ingestion of landing files into lh_bronze (IS Bank Data Platform)."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "b3dadab3-750a-97c2-4835-6f7fd87f9eb5"
+  }
+}
