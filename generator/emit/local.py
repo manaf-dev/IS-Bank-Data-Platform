@@ -91,7 +91,8 @@ def _write(frame: pd.DataFrame, path: Path, fmt: str, meta: dict) -> Path:
     if fmt == "sql":
         frame.to_parquet(path, index=False)
     elif fmt == "csv":
-        frame.to_csv(path, index=False, date_format="%Y-%m-%d %H:%M:%S")
+        # Force LF so output is byte-identical on every OS (pandas uses os.linesep).
+        frame.to_csv(path, index=False, date_format="%Y-%m-%d %H:%M:%S", lineterminator="\n")
     elif fmt == "jsonl":
         _write_jsonl(frame, path)
     elif fmt == "fixed_width":

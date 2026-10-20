@@ -133,3 +133,11 @@ def test_platform_code_never_touches_the_answer_key():
         assert "answer_key" not in text, path
         assert "import generator" not in text, path
         assert "from generator" not in text, path
+
+
+def test_written_files_use_lf_line_endings(landing: Path):
+    """Output must be byte-identical across operating systems (no CRLF from Windows)."""
+    for pattern in ("*.csv", "*.jsonl", "*.txt"):
+        sample = files(landing, pattern)[:20]
+        assert sample, pattern
+        assert all(b"\r\n" not in p.read_bytes() for p in sample), pattern
