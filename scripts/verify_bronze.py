@@ -12,9 +12,10 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 import pandas as pd
+import pyarrow as pa
 import pyarrow.parquet as pq
 from azure.identity import AzureCliCredential
-from deltalake import DeltaTable
+from deltalake import DeltaTable, QueryBuilder
 
 from isbank.bronze.files import workbook_cells
 from isbank.bronze.sources import enabled_sources
@@ -38,23 +39,41 @@ def expected(landing: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def query(sql: str, tables: dict[str, str], opts: dict) -> pd.DataFrame:
+    """Run SQL over Delta tables with delta-rs's DataFusion engine.
+
+    Fabric writes tables with deletion vectors, which delta-rs's PyArrow reader rejects but
+    its SQL engine reads correctly.
+    """
+    builder = QueryBuilder()
+    for name, uri in tables.items():
+        builder.register(name, DeltaTable(uri, storage_options=opts))
+    return pa.table(builder.execute(sql).read_all()).to_pandas()
+
+
 def actual(workspace: str, lakehouse: str, tables: list[str]) -> pd.DataFrame:
     """Rows, distinct files, and logged files per Bronze table, read from OneLake."""
     token = AzureCliCredential().get_token("https://storage.azure.com/.default").token
     opts = {"bearer_token": token, "use_fabric_endpoint": "true"}
     base = f"abfss://{workspace}@onelake.dfs.fabric.microsoft.com/{lakehouse}/Tables/dbo"
-    log = DeltaTable(f"{base}/bronze_file_log", storage_options=opts).to_pandas()
+    log = query(
+        "select table_name, count(*) as logged_files from log group by table_name",
+        {"log": f"{base}/bronze_file_log"},
+        opts,
+    ).set_index("table_name")["logged_files"]
     rows = []
     for table in tables:
-        dt = DeltaTable(f"{base}/{table}", storage_options=opts)
-        data = dt.to_pandas(columns=["_source_file", "_batch_id"])
+        counts = query(
+            "select count(*) as n, count(distinct _source_file) as f from t",
+            {"t": f"{base}/{table}"},
+            opts,
+        ).iloc[0]
         rows.append(
             {
                 "table": table,
-                "actual_rows": len(data),
-                "distinct_files_in_table": data["_source_file"].nunique(),
-                "logged_files": int((log["table_name"] == table).sum()),
-                "delta_version": dt.version(),
+                "actual_rows": int(counts["n"]),
+                "distinct_files_in_table": int(counts["f"]),
+                "logged_files": int(log.get(table, 0)),
             }
         )
     return pd.DataFrame(rows)
