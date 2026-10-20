@@ -9,3 +9,4 @@ Short records of significant decisions: context, options, decision, consequences
 | [0003](0003-generator-dataframe-library.md) | pandas and NumPy for the synthetic data generator | Accepted |
 | [0004](0004-source-system-delivery.md) | How simulated source systems deliver data to Fabric | Accepted |
 | [0005](0005-simulation-horizon-and-daily-ticks.md) | Simulation horizon and deterministic daily ticks | Accepted |
+| [0006](0006-schema-enabled-lakehouses.md) | Schema-enabled lakehouses | Accepted |
