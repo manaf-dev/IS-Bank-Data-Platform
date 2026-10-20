@@ -19,6 +19,8 @@ dev = [
 # Local-only dependencies of the synthetic source-system simulator.
 # Data libraries (polars/numpy/...) are added in Phase 1.
 generator = [
+    "azure-identity>=1.26.0",
+    "azure-storage-file-datalake>=12.26.0",
     "numpy>=2.5.4",
     "openpyxl>=3.1.5",
     "pandas>=3.0.6",
