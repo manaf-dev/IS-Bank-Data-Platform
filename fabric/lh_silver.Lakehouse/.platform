@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Lakehouse",
+    "displayName": "lh_silver",
+    "description": "Silver layer: typed, standardised, deduplicated, quality-checked data with SCD2 history and resolved parties (IS Bank Data Platform)."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "f8451ecc-6606-b0b6-4b52-ccf87f6cfe30"
+  }
+}
