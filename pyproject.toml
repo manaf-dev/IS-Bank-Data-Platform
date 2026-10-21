@@ -1,6 +1,6 @@
 [project]
 name = "isbank"
-version = "0.2.1"
+version = "0.3.0"
 description = "Shared platform library for the IS Bank data platform on Microsoft Fabric (DQ rules, entity resolution, transformations)."
 readme = "README.md"
 # Matches the Python version of Fabric Spark Runtime 2.0, the runtime the Dev workspace uses.
