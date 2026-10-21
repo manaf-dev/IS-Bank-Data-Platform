@@ -33,6 +33,8 @@ FOREIGN_KEYS = [
     ("fact_loan", "account_key", "dim_account"),
     ("fact_loan_payment", "account_key", "dim_account"),
     ("fact_loan_payment", "branch_key", "dim_branch"),
+    ("fact_loan_payment", "customer_key", "dim_customer"),
+    ("sec_user_branch", "branch_key", "dim_branch"),
     ("fact_card_transaction", "merchant_key", "dim_merchant"),
     ("fact_card_transaction", "date_key", "dim_date"),
     ("fact_digital_event", "customer_key", "dim_customer"),
@@ -49,6 +51,7 @@ FACTS = [
     "fact_gl_entry",
     "recon_gl_fees",
     "app_user_link",
+    "sec_user_branch",
 ]
 
 
