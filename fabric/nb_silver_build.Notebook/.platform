@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_silver_build",
+    "description": "Silver: rebuild typed, deduplicated, quality-checked tables and resolved parties from Bronze (IS Bank Data Platform)."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "73811125-dce3-bdfc-45fc-0f0831dafdb8"
+  }
+}
