@@ -1,36 +1,19 @@
 """End-to-end Silver on generated data: every table builds, DQ is recorded, and entity
 resolution is measured against the answer key (offline evaluation, never in the pipeline)."""
 
-import datetime as dt
-from fnmatch import fnmatch
 from itertools import combinations
-from pathlib import Path
 
 import pandas as pd
 import pytest
 
 from generator import answer_key
 from generator.config import load_config
-from generator.emit.local import LandingWriter
-from generator.projectors import (
-    card_switch,
-    compliance,
-    core_banking,
-    credit_bureau,
-    general_ledger,
-    loan_origination,
-    mobile_banking,
-    reference_data,
-)
-from generator.timeline import snapshot
 from generator.world import build_world
-from isbank.bronze.ingest import read_files, with_metadata
-from isbank.bronze.sources import enabled_sources
 from isbank.silver import pipeline
 from isbank.silver.finance import BUREAU_LAYOUT
+from tests.local_platform import build_silver
 
 pytestmark = pytest.mark.spark
-TODAY = dt.date(2025, 12, 31)
 
 
 @pytest.fixture(scope="module")
@@ -40,34 +23,7 @@ def world():
 
 @pytest.fixture(scope="module")
 def silver(spark, world, tmp_path_factory):
-    root = tmp_path_factory.mktemp("silver") / "landing"
-    w = LandingWriter(root=root)
-    w.write(core_banking.snapshot_batch(world, snapshot(world, TODAY)), f"full_{TODAY:%Y%m%d}")
-    w.write(loan_origination.extracts(world, None, TODAY), "")
-    w.write(credit_bureau.weekly_reports(world, None, TODAY), "")
-    w.write(general_ledger.monthly_statements(world, None, TODAY), "")
-    w.write(compliance.monthly_lists(world, dt.date(2025, 10, 31), TODAY), "")
-    w.write(reference_data.fx_rates(world, dt.date(2025, 12, 1), TODAY), "")
-    since, until = pd.Timestamp("2025-12-25"), pd.Timestamp(TODAY)
-    w.write(card_switch.events_delivered(world, since, until), "")
-    w.write(mobile_banking.events_delivered(world, since, until), "")
-
-    files = [p for p in root.rglob("*") if p.is_file()]
-
-    def first_line(uri: str) -> str:
-        path = Path(uri.replace("file:///", "").replace("file:/", ""))
-        with open(path, encoding="utf-8") as f:
-            return f.readline()
-
-    bronze = {}
-    for spec in enabled_sources():
-        paths = [p.as_uri() for p in files if fnmatch(p.relative_to(root).as_posix(), spec.pattern)]
-        df = read_files(spark, spec, paths, first_line)
-        bronze[spec.table] = with_metadata(df, spec.system, "b", dt.datetime(2026, 1, 1)).cache()
-
-    written = {}
-    run = pipeline.run(spark, bronze.__getitem__, written.__setitem__, "run-1")
-    return run, written
+    return build_silver(spark, world, tmp_path_factory.mktemp("silver") / "landing")
 
 
 def test_every_table_builds(silver):

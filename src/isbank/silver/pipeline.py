@@ -33,6 +33,19 @@ def branches(bronze):
     )
 
 
+def cards(bronze):
+    """Debit card register: masked PAN to account (latest delivery per card)."""
+    typed = bronze.select(
+        "card_id",
+        "pan_masked",
+        "account_number",
+        F.to_date("issued_date").alias("issued_date"),
+        "card_type",
+        "_ingested_at",
+    )
+    return latest_per_key(typed, ["card_id"], [F.col("_ingested_at").desc()]).drop("_ingested_at")
+
+
 def products(bronze):
     """Product reference data (latest delivery per product)."""
     typed = bronze.select("product_code", "product_name", "product_family", "_ingested_at")
@@ -55,6 +68,7 @@ class SilverTable:
 TABLES: tuple[SilverTable, ...] = (
     SilverTable("branch", ("core_branches",), branches, (), ("branch_code",)),
     SilverTable("product", ("core_products",), products, (), ("product_code",)),
+    SilverTable("card", ("core_cards",), cards, (), ("card_id",)),
     SilverTable(
         "customer_history",
         ("core_customers",),
