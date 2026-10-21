@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "fraud_card2",
+  "position": {
+    "x": 520,
+    "y": 80,
+    "z": 5,
+    "height": 100,
+    "width": 240,
+    "tabOrder": 5
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_card_transaction"
+                    }
+                  },
+                  "Property": "Card Decline Rate"
+                }
+              },
+              "queryRef": "fact_card_transaction.Card Decline Rate",
+              "nativeQueryRef": "Card Decline Rate"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

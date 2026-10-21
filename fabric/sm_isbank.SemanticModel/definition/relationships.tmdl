@@ -1,0 +1,132 @@
+relationship fact_transaction_date_key__dim_date
+	fromColumn: fact_transaction.date_key
+	toColumn: dim_date.date_key
+
+relationship fact_transaction_account_key__dim_account
+	fromColumn: fact_transaction.account_key
+	toColumn: dim_account.account_key
+
+relationship fact_transaction_customer_key__dim_customer
+	fromColumn: fact_transaction.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship fact_transaction_product_key__dim_product
+	fromColumn: fact_transaction.product_key
+	toColumn: dim_product.product_key
+
+relationship fact_transaction_branch_key__dim_branch
+	fromColumn: fact_transaction.branch_key
+	toColumn: dim_branch.branch_key
+
+relationship fact_transaction_channel_key__dim_channel
+	fromColumn: fact_transaction.channel_key
+	toColumn: dim_channel.channel_key
+
+relationship fact_account_balance_monthly_account_key__dim_account
+	fromColumn: fact_account_balance_monthly.account_key
+	toColumn: dim_account.account_key
+
+relationship fact_account_balance_monthly_customer_key__dim_customer
+	fromColumn: fact_account_balance_monthly.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship fact_account_balance_monthly_product_key__dim_product
+	fromColumn: fact_account_balance_monthly.product_key
+	toColumn: dim_product.product_key
+
+relationship fact_account_balance_monthly_branch_key__dim_branch
+	fromColumn: fact_account_balance_monthly.branch_key
+	toColumn: dim_branch.branch_key
+
+relationship fact_loan_account_key__dim_account
+	fromColumn: fact_loan.account_key
+	toColumn: dim_account.account_key
+
+relationship fact_loan_customer_key__dim_customer
+	fromColumn: fact_loan.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship fact_loan_product_key__dim_product
+	fromColumn: fact_loan.product_key
+	toColumn: dim_product.product_key
+
+relationship fact_loan_branch_key__dim_branch
+	fromColumn: fact_loan.branch_key
+	toColumn: dim_branch.branch_key
+
+relationship fact_loan_payment_account_key__dim_account
+	fromColumn: fact_loan_payment.account_key
+	toColumn: dim_account.account_key
+
+relationship fact_loan_payment_customer_key__dim_customer
+	fromColumn: fact_loan_payment.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship fact_loan_payment_product_key__dim_product
+	fromColumn: fact_loan_payment.product_key
+	toColumn: dim_product.product_key
+
+relationship fact_loan_payment_branch_key__dim_branch
+	fromColumn: fact_loan_payment.branch_key
+	toColumn: dim_branch.branch_key
+
+relationship fact_card_transaction_date_key__dim_date
+	fromColumn: fact_card_transaction.date_key
+	toColumn: dim_date.date_key
+
+relationship fact_card_transaction_merchant_key__dim_merchant
+	fromColumn: fact_card_transaction.merchant_key
+	toColumn: dim_merchant.merchant_key
+
+relationship fact_card_transaction_account_key__dim_account
+	fromColumn: fact_card_transaction.account_key
+	toColumn: dim_account.account_key
+
+relationship fact_card_transaction_customer_key__dim_customer
+	fromColumn: fact_card_transaction.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship fact_card_transaction_branch_key__dim_branch
+	fromColumn: fact_card_transaction.branch_key
+	toColumn: dim_branch.branch_key
+
+relationship fact_digital_event_date_key__dim_date
+	fromColumn: fact_digital_event.date_key
+	toColumn: dim_date.date_key
+
+relationship fact_digital_event_customer_key__dim_customer
+	fromColumn: fact_digital_event.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship fact_gl_entry_branch_key__dim_branch
+	fromColumn: fact_gl_entry.branch_key
+	toColumn: dim_branch.branch_key
+
+relationship recon_gl_fees_branch_key__dim_branch
+	fromColumn: recon_gl_fees.branch_key
+	toColumn: dim_branch.branch_key
+
+relationship fact_loan_disbursed_date_key__dim_date
+	isActive: false
+	fromColumn: fact_loan.disbursed_date_key
+	toColumn: dim_date.date_key
+
+relationship fact_loan_payment_due_date_key__dim_date
+	fromColumn: fact_loan_payment.due_date_key
+	toColumn: dim_date.date_key
+
+relationship fact_account_balance_monthly_month_key__dim_date
+	toCardinality: many
+	fromColumn: fact_account_balance_monthly.month_key
+	toColumn: dim_date.month_key
+
+relationship fact_gl_entry_month_key__dim_date
+	toCardinality: many
+	fromColumn: fact_gl_entry.month_key
+	toColumn: dim_date.month_key
+
+relationship recon_gl_fees_month_key__dim_date
+	toCardinality: many
+	fromColumn: recon_gl_fees.month_key
+	toColumn: dim_date.month_key
+

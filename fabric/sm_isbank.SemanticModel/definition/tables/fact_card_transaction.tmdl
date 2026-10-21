@@ -1,0 +1,139 @@
+table fact_card_transaction
+
+	measure 'Card Transactions' = COUNTROWS ( fact_card_transaction )
+		formatString: #,0
+		displayFolder: Cards
+
+	measure 'Card Value' = SUM ( fact_card_transaction[amount] )
+		formatString: #,0.00
+		displayFolder: Cards
+
+	measure 'Card Decline Rate' = DIVIDE ( CALCULATE ( [Card Transactions], fact_card_transaction[is_approved] = FALSE () ), [Card Transactions] )
+		formatString: 0.0%
+		displayFolder: Cards
+
+	measure 'Night-time Share' = DIVIDE ( CALCULATE ( [Card Transactions], fact_card_transaction[is_night] = TRUE () ), [Card Transactions] )
+		formatString: 0.0%
+		displayFolder: Fraud Signals
+
+	measure 'Night-time Card Value' = CALCULATE ( [Card Value], fact_card_transaction[is_night] = TRUE () )
+		formatString: #,0.00
+		displayFolder: Fraud Signals
+
+	measure 'Card-testing Alerts' =
+			-- Card-days with 5+ probes of GHS 10 or less: the classic test-then-cash-out pattern.
+			VAR Probes =
+			    SUMMARIZE (
+			        FILTER ( fact_card_transaction, fact_card_transaction[amount] <= 10 ),
+			        fact_card_transaction[account_key],
+			        fact_card_transaction[date_key]
+			    )
+			RETURN
+			    COUNTROWS (
+			        FILTER (
+			            Probes,
+			            CALCULATE ( [Card Transactions], fact_card_transaction[amount] <= 10 ) >= 5
+			        )
+			    )
+		formatString: #,0
+		displayFolder: Fraud Signals
+
+	measure 'E-commerce Share' = DIVIDE ( CALCULATE ( [Card Transactions], fact_card_transaction[entry_mode] = "ECOMMERCE" ), [Card Transactions] )
+		formatString: 0.0%
+		displayFolder: Cards
+
+	column event_id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: event_id
+
+	column date_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column event_ts
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: event_ts
+
+	column hour_of_day
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: hour_of_day
+
+	column is_night
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_night
+
+	column merchant_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: merchant_key
+
+	column account_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: account_key
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column txn_kind
+		dataType: string
+		summarizeBy: none
+		sourceColumn: txn_kind
+
+	column entry_mode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: entry_mode
+
+	column merchant_city
+		dataType: string
+		summarizeBy: none
+		sourceColumn: merchant_city
+
+	column amount
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: amount
+
+	column response_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: response_code
+
+	column is_approved
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_approved
+
+	column is_late
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_late
+
+	partition fact_card_transaction = entity
+		mode: directLake
+		source
+			entityName: fact_card_transaction
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

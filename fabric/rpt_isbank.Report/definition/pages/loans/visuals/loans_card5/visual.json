@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "loans_card5",
+  "position": {
+    "x": 1060,
+    "y": 80,
+    "z": 8,
+    "height": 100,
+    "width": 198,
+    "tabOrder": 8
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_loan"
+                    }
+                  },
+                  "Property": "Avg Bureau Score"
+                }
+              },
+              "queryRef": "fact_loan.Avg Bureau Score",
+              "nativeQueryRef": "Avg Bureau Score"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

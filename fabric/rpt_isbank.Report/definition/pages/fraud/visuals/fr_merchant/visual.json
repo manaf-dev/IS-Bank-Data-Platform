@@ -1,0 +1,81 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "fr_merchant",
+  "position": {
+    "x": 650,
+    "y": 460,
+    "z": 12,
+    "height": 250,
+    "width": 610,
+    "tabOrder": 12
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_merchant"
+                    }
+                  },
+                  "Property": "merchant_name"
+                }
+              },
+              "queryRef": "dim_merchant.merchant_name",
+              "nativeQueryRef": "merchant_name",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_card_transaction"
+                    }
+                  },
+                  "Property": "Card Transactions"
+                }
+              },
+              "queryRef": "fact_card_transaction.Card Transactions",
+              "nativeQueryRef": "Card Transactions"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_card_transaction"
+                    }
+                  },
+                  "Property": "Card Decline Rate"
+                }
+              },
+              "queryRef": "fact_card_transaction.Card Decline Rate",
+              "nativeQueryRef": "Card Decline Rate"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_card_transaction"
+                    }
+                  },
+                  "Property": "Night-time Share"
+                }
+              },
+              "queryRef": "fact_card_transaction.Night-time Share",
+              "nativeQueryRef": "Night-time Share"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

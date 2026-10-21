@@ -1,0 +1,67 @@
+table fact_gl_entry
+
+	measure Income = CALCULATE ( SUM ( fact_gl_entry[amount] ), fact_gl_entry[line_type] = "INCOME" )
+		formatString: #,0.00
+		displayFolder: Profitability
+
+	measure Expense = -CALCULATE ( SUM ( fact_gl_entry[amount] ), fact_gl_entry[line_type] = "EXPENSE" )
+		formatString: #,0.00
+		displayFolder: Profitability
+
+	measure 'Net Profit' = [Income] - [Expense]
+		formatString: #,0.00
+		displayFolder: Profitability
+
+	measure 'Cost-to-Income Ratio' = DIVIDE ( [Expense], [Income] )
+		formatString: 0.0%
+		displayFolder: Profitability
+
+	measure 'Profit Margin' = DIVIDE ( [Net Profit], [Income] )
+		formatString: 0.0%
+		displayFolder: Profitability
+
+	column month_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: month_key
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column cost_centre
+		dataType: string
+		summarizeBy: none
+		sourceColumn: cost_centre
+
+	column gl_account
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gl_account
+
+	column gl_description
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gl_description
+
+	column line_type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: line_type
+
+	column amount
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: amount
+
+	partition fact_gl_entry = entity
+		mode: directLake
+		source
+			entityName: fact_gl_entry
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

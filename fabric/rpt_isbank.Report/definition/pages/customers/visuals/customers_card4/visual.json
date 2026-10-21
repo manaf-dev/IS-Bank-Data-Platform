@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "customers_card4",
+  "position": {
+    "x": 852,
+    "y": 80,
+    "z": 7,
+    "height": 100,
+    "width": 198,
+    "tabOrder": 7
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_digital_event"
+                    }
+                  },
+                  "Property": "Biometric Login Share"
+                }
+              },
+              "queryRef": "fact_digital_event.Biometric Login Share",
+              "nativeQueryRef": "Biometric Login Share"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

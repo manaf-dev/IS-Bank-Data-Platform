@@ -1,0 +1,66 @@
+/// GL fee income vs core-ledger fee postings per branch and month.
+table recon_gl_fees
+
+	measure 'GL Fee Income' = SUM ( recon_gl_fees[gl_fee_income] )
+		formatString: #,0.00
+		displayFolder: Reconciliation
+
+	measure 'Core Fee Income' = SUM ( recon_gl_fees[core_fee_income] )
+		formatString: #,0.00
+		displayFolder: Reconciliation
+
+	measure 'Reconciliation Difference' = SUM ( recon_gl_fees[difference] )
+		formatString: #,0.00
+		displayFolder: Reconciliation
+
+	measure 'Reconciliation Breaks' = CALCULATE ( COUNTROWS ( recon_gl_fees ), recon_gl_fees[is_break] = TRUE () )
+		formatString: #,0
+		displayFolder: Reconciliation
+
+	column month_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: month_key
+
+	column branch_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: branch_code
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column gl_fee_income
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: gl_fee_income
+
+	column core_fee_income
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: core_fee_income
+
+	column difference
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: difference
+
+	column is_break
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_break
+
+	partition recon_gl_fees = entity
+		mode: directLake
+		source
+			entityName: recon_gl_fees
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

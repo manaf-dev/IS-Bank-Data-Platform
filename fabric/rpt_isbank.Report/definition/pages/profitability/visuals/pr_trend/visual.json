@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "pr_trend",
+  "position": {
+    "x": 790,
+    "y": 190,
+    "z": 9,
+    "height": 250,
+    "width": 470,
+    "tabOrder": 9
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "month_key"
+                }
+              },
+              "queryRef": "dim_date.month_key",
+              "nativeQueryRef": "month_key",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_gl_entry"
+                    }
+                  },
+                  "Property": "Net Profit"
+                }
+              },
+              "queryRef": "fact_gl_entry.Net Profit",
+              "nativeQueryRef": "Net Profit"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

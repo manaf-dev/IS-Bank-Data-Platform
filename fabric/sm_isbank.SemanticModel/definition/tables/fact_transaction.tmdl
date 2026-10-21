@@ -1,0 +1,131 @@
+table fact_transaction
+
+	measure Transactions = COUNTROWS ( fact_transaction )
+		formatString: #,0
+		displayFolder: Activity
+
+	measure 'Transaction Value' = SUM ( fact_transaction[amount] )
+		formatString: #,0.00
+		displayFolder: Activity
+
+	measure 'Net Flow' = SUM ( fact_transaction[signed_amount] )
+		formatString: #,0.00
+		displayFolder: Activity
+
+	measure 'Active Customers' = CALCULATE ( DISTINCTCOUNT ( fact_transaction[customer_key] ), fact_transaction[customer_key] <> -1 )
+		formatString: #,0
+		displayFolder: Activity
+
+	measure 'Customers at Risk' =
+			-- Customers whose activity in the last 3 months fell below half of the 3 months before.
+			VAR EndDate = CALCULATE ( MAX ( dim_date[date] ), fact_transaction )
+			VAR PriorStart = EDATE ( EndDate, -6 ) + 1
+			VAR PriorEnd = EDATE ( EndDate, -3 )
+			VAR Base =
+			    CALCULATETABLE (
+			        VALUES ( fact_transaction[customer_key] ),
+			        DATESBETWEEN ( dim_date[date], PriorStart, PriorEnd ),
+			        fact_transaction[customer_key] <> -1
+			    )
+			RETURN
+			    COUNTROWS (
+			        FILTER (
+			            Base,
+			            VAR Prior = CALCULATE ( [Transactions], DATESBETWEEN ( dim_date[date], PriorStart, PriorEnd ) )
+			            VAR Recent = CALCULATE ( [Transactions], DATESBETWEEN ( dim_date[date], PriorEnd + 1, EndDate ) )
+			            RETURN Recent < 0.5 * Prior
+			        )
+			    )
+		formatString: #,0
+		displayFolder: Churn
+
+	measure 'Customers Active in Prior Quarter' =
+			VAR EndDate = CALCULATE ( MAX ( dim_date[date] ), fact_transaction )
+			RETURN
+			    CALCULATE (
+			        [Active Customers],
+			        DATESBETWEEN ( dim_date[date], EDATE ( EndDate, -6 ) + 1, EDATE ( EndDate, -3 ) )
+			    )
+		formatString: #,0
+		displayFolder: Churn
+
+	measure 'At-risk Rate' = DIVIDE ( [Customers at Risk], [Customers Active in Prior Quarter] )
+		formatString: 0.0%
+		displayFolder: Churn
+
+	column txn_ref
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: txn_ref
+
+	column date_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column account_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: account_key
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column product_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column channel_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: channel_key
+
+	column txn_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: txn_code
+
+	column dr_cr
+		dataType: string
+		summarizeBy: none
+		sourceColumn: dr_cr
+
+	column booking_ts
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: booking_ts
+
+	column amount
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: amount
+
+	column signed_amount
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: signed_amount
+
+	partition fact_transaction = entity
+		mode: directLake
+		source
+			entityName: fact_transaction
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

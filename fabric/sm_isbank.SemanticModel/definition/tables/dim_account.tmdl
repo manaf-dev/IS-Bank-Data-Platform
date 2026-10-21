@@ -1,0 +1,94 @@
+table dim_account
+
+	column account_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: account_key
+
+	column account_number
+		dataType: string
+		summarizeBy: none
+		sourceColumn: account_number
+
+	column account_number_masked
+		dataType: string
+		summarizeBy: none
+		sourceColumn: account_number_masked
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column product_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column product_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: product_code
+
+	column branch_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: branch_code
+
+	column status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+
+	column opened_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: opened_date
+
+	column closed_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: closed_date
+
+	column contract_amount
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: contract_amount
+
+	column interest_rate_pct
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: interest_rate_pct
+
+	column term_months
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: term_months
+
+	column maturity_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: maturity_date
+
+	partition dim_account = entity
+		mode: directLake
+		source
+			entityName: dim_account
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

@@ -1,0 +1,78 @@
+table fact_loan_payment
+
+	measure 'Instalments Due' = COUNTROWS ( fact_loan_payment )
+		formatString: #,0
+		displayFolder: Collections
+
+	measure 'Missed Instalments' = CALCULATE ( COUNTROWS ( fact_loan_payment ), fact_loan_payment[is_missed] = TRUE () )
+		formatString: #,0
+		displayFolder: Collections
+
+	measure 'Missed Instalment Rate' = DIVIDE ( [Missed Instalments], [Instalments Due] )
+		formatString: 0.0%
+		displayFolder: Collections
+
+	measure 'Collection Rate' = DIVIDE ( SUM ( fact_loan_payment[amount_paid] ), SUM ( fact_loan_payment[amount_due] ) )
+		formatString: 0.0%
+		displayFolder: Collections
+
+	column account_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: account_key
+
+	column installment_no
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: installment_no
+
+	column due_date_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: due_date_key
+
+	column amount_due
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: amount_due
+
+	column amount_paid
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: amount_paid
+
+	column is_missed
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_missed
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column product_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	partition fact_loan_payment = entity
+		mode: directLake
+		source
+			entityName: fact_loan_payment
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

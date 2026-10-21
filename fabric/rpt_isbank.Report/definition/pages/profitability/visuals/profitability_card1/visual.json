@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "profitability_card1",
+  "position": {
+    "x": 270,
+    "y": 80,
+    "z": 4,
+    "height": 100,
+    "width": 240,
+    "tabOrder": 4
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_gl_entry"
+                    }
+                  },
+                  "Property": "Expense"
+                }
+              },
+              "queryRef": "fact_gl_entry.Expense",
+              "nativeQueryRef": "Expense"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

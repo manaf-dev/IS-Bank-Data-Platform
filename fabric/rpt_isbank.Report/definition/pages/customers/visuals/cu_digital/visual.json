@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "cu_digital",
+  "position": {
+    "x": 650,
+    "y": 190,
+    "z": 10,
+    "height": 260,
+    "width": 610,
+    "tabOrder": 10
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "month_key"
+                }
+              },
+              "queryRef": "dim_date.month_key",
+              "nativeQueryRef": "month_key",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_digital_event"
+                    }
+                  },
+                  "Property": "Digital Customers"
+                }
+              },
+              "queryRef": "fact_digital_event.Digital Customers",
+              "nativeQueryRef": "Digital Customers"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

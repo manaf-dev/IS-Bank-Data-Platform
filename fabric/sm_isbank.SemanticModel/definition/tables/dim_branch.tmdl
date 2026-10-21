@@ -1,0 +1,46 @@
+table dim_branch
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column branch_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: branch_code
+
+	column branch_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: branch_name
+
+	column city
+		dataType: string
+		summarizeBy: none
+		sourceColumn: city
+
+	column region
+		dataType: string
+		summarizeBy: none
+		sourceColumn: region
+
+	column opened_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: opened_date
+
+	column cost_centre
+		dataType: string
+		summarizeBy: none
+		sourceColumn: cost_centre
+
+	partition dim_branch = entity
+		mode: directLake
+		source
+			entityName: dim_branch
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+
