@@ -1,0 +1,35 @@
+table dim_merchant
+
+	column merchant_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: merchant_key
+
+	column merchant_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: merchant_id
+
+	column merchant_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: merchant_name
+
+	column mcc
+		dataType: string
+		summarizeBy: none
+		sourceColumn: mcc
+
+	column merchant_city
+		dataType: string
+		summarizeBy: none
+		sourceColumn: merchant_city
+
+	partition dim_merchant = entity
+		mode: directLake
+		source
+			entityName: dim_merchant
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

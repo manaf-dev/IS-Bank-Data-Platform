@@ -1,0 +1,80 @@
+/// One row per resolved party (golden customer). Names are masked; no raw PII.
+table dim_customer
+
+	measure Customers = COUNTROWS ( dim_customer )
+		formatString: #,0
+		displayFolder: Customers
+
+	measure 'Customers with Duplicate CIF' = CALCULATE ( COUNTROWS ( dim_customer ), dim_customer[has_duplicate_cif] = TRUE () )
+		formatString: #,0
+		displayFolder: Customers
+
+	measure 'Customers with KYC Gap' = CALCULATE ( COUNTROWS ( dim_customer ), dim_customer[has_kyc_gap] = TRUE () )
+		formatString: #,0
+		displayFolder: Customers
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column party_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: party_id
+
+	column customer_type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: customer_type
+
+	column display_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: display_name
+
+	column gender
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gender
+
+	column age_band
+		dataType: string
+		summarizeBy: none
+		sourceColumn: age_band
+
+	column home_branch_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: home_branch_code
+
+	column customer_since
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: customer_since
+
+	column cif_count
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: cif_count
+
+	column has_duplicate_cif
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: has_duplicate_cif
+
+	column has_kyc_gap
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: has_kyc_gap
+
+	partition dim_customer = entity
+		mode: directLake
+		source
+			entityName: dim_customer
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

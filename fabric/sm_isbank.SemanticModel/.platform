@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "sm_isbank"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "5f89fe89-85ee-9ae7-4a23-cb2a938d49d1"
+  }
+}

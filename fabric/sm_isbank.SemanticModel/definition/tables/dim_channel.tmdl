@@ -1,0 +1,20 @@
+table dim_channel
+
+	column channel_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: channel_key
+
+	column channel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: channel
+
+	partition dim_channel = entity
+		mode: directLake
+		source
+			entityName: dim_channel
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

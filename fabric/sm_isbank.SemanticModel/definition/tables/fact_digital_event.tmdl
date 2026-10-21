@@ -1,0 +1,119 @@
+table fact_digital_event
+
+	measure 'Digital Events' = COUNTROWS ( fact_digital_event )
+		formatString: #,0
+		displayFolder: Digital
+
+	measure 'Digital Users' = DISTINCTCOUNT ( fact_digital_event[user_id] )
+		formatString: #,0
+		displayFolder: Digital
+
+	measure 'Digital Customers' = CALCULATE ( DISTINCTCOUNT ( fact_digital_event[customer_key] ), fact_digital_event[customer_key] <> -1 )
+		formatString: #,0
+		displayFolder: Digital
+
+	measure 'Digital Adoption' = DIVIDE ( [Digital Customers], [Active Customers] )
+		formatString: 0.0%
+		displayFolder: Digital
+
+	measure 'App Logins' = CALCULATE ( [Digital Events], fact_digital_event[event_type] = "LOGIN_SUCCESS" )
+		formatString: #,0
+		displayFolder: Digital
+
+	measure 'Biometric Login Share' = DIVIDE ( CALCULATE ( [App Logins], fact_digital_event[biometric_used] = TRUE () ), [App Logins] )
+		formatString: 0.0%
+		displayFolder: Digital
+
+	measure 'Digital Payment Value' =
+			CALCULATE (
+			    SUM ( fact_digital_event[amount] ),
+			    fact_digital_event[event_type] IN { "TRANSFER", "MOMO_SEND", "BILL_PAYMENT" }
+			)
+		formatString: #,0.00
+		displayFolder: Digital
+
+	measure 'MoMo Inflow' = -CALCULATE ( SUM ( fact_digital_event[amount] ), fact_digital_event[event_type] = "MOMO_PULL" )
+		formatString: #,0.00
+		displayFolder: Digital
+
+	measure 'Failed Login Rate' =
+			DIVIDE (
+			    CALCULATE ( [Digital Events], fact_digital_event[event_type] = "LOGIN_FAILED" ),
+			    CALCULATE ( [Digital Events], fact_digital_event[event_type] IN { "LOGIN_SUCCESS", "LOGIN_FAILED" } )
+			)
+		formatString: 0.0%
+		displayFolder: Digital
+
+	column event_id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: event_id
+
+	column date_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column event_ts
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: event_ts
+
+	column event_type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: event_type
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column user_id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: user_id
+
+	column device_os
+		dataType: string
+		summarizeBy: none
+		sourceColumn: device_os
+
+	column app_major_version
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: app_major_version
+
+	column biometric_used
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: biometric_used
+
+	column status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+
+	column amount
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: amount
+
+	column is_late
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_late
+
+	partition fact_digital_event = entity
+		mode: directLake
+		source
+			entityName: fact_digital_event
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

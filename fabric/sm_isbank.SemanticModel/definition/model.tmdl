@@ -1,0 +1,26 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-US
+
+ref table dim_account
+ref table dim_branch
+ref table dim_channel
+ref table dim_customer
+ref table dim_date
+ref table dim_merchant
+ref table dim_product
+ref table fact_account_balance_monthly
+ref table fact_card_transaction
+ref table fact_digital_event
+ref table fact_gl_entry
+ref table fact_loan
+ref table fact_loan_payment
+ref table fact_transaction
+ref table recon_gl_fees
+ref table sec_user_branch
+
+ref role 'Branch Manager'
+ref role Executive
+

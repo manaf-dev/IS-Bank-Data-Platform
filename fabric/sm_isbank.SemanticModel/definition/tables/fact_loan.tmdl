@@ -1,0 +1,145 @@
+/// Loan book snapshot as of 2025-12-31. Disbursal date relationship is inactive.
+table fact_loan
+
+	measure Loans = COUNTROWS ( fact_loan )
+		formatString: #,0
+		displayFolder: Loan Book
+
+	measure 'Loan Principal' = SUM ( fact_loan[principal] )
+		formatString: #,0.00
+		displayFolder: Loan Book
+
+	measure 'Amount Repaid' = SUM ( fact_loan[amount_repaid] )
+		formatString: #,0.00
+		displayFolder: Loan Book
+
+	measure 'Open Loans' = CALCULATE ( [Loans], fact_loan[loan_status] IN { "PERFORMING", "ARREARS", "DEFAULT" } )
+		formatString: #,0
+		displayFolder: Loan Book
+
+	measure 'Defaulted Loans' = CALCULATE ( [Loans], fact_loan[loan_status] = "DEFAULT" )
+		formatString: #,0
+		displayFolder: Loan Book
+
+	measure 'NPL Ratio' =
+			-- Non-performing (arrears or default) principal over the open book.
+			DIVIDE (
+			    CALCULATE ( [Loan Principal], fact_loan[loan_status] IN { "ARREARS", "DEFAULT" } ),
+			    CALCULATE ( [Loan Principal], fact_loan[loan_status] IN { "PERFORMING", "ARREARS", "DEFAULT" } )
+			)
+		formatString: 0.0%
+		displayFolder: Loan Book
+
+	measure 'Default Rate' = DIVIDE ( [Defaulted Loans], [Loans] )
+		formatString: 0.0%
+		displayFolder: Loan Book
+
+	measure 'Avg Bureau Score' = AVERAGE ( fact_loan[bureau_score] )
+		formatString: 0
+		displayFolder: Loan Book
+
+	measure 'Loans Disbursed' = CALCULATE ( [Loans], USERELATIONSHIP ( fact_loan[disbursed_date_key], dim_date[date_key] ) )
+		formatString: #,0
+		displayFolder: Loan Book
+
+	column account_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: account_key
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column product_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column disbursed_date_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: disbursed_date_key
+
+	column principal
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: principal
+
+	column interest_rate_pct
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: interest_rate_pct
+
+	column term_months
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: term_months
+
+	column instalments_due
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: instalments_due
+
+	column instalments_missed
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: instalments_missed
+
+	column amount_repaid
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: amount_repaid
+
+	column last_missed_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: last_missed_date
+
+	column applicant_monthly_income
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: applicant_monthly_income
+
+	column employer_type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: employer_type
+
+	column bureau_score
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: bureau_score
+
+	column loan_status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: loan_status
+
+	partition fact_loan = entity
+		mode: directLake
+		source
+			entityName: fact_loan
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

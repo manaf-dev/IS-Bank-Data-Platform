@@ -1,0 +1,77 @@
+/// Month-end balance per account. Filtered by month through dim_date[month_key].
+table fact_account_balance_monthly
+
+	measure 'Closing Balance' =
+			VAR LastMonth = MAX ( fact_account_balance_monthly[month_key] )
+			RETURN
+			    CALCULATE (
+			        SUM ( fact_account_balance_monthly[balance] ),
+			        fact_account_balance_monthly[month_key] = LastMonth
+			    )
+		formatString: #,0.00
+		displayFolder: Balances
+
+	measure Deposits = CALCULATE ( [Closing Balance], dim_product[product_family] = "DEPOSIT" )
+		formatString: #,0.00
+		displayFolder: Balances
+
+	measure 'Deposits 3M Ago' =
+			VAR LastMonth = MAX ( fact_account_balance_monthly[month_key] )
+			VAR Target = FORMAT ( EDATE ( DATE ( INT ( LastMonth / 100 ), MOD ( LastMonth, 100 ), 1 ), -3 ), "YYYYMM" ) + 0
+			RETURN
+			    CALCULATE (
+			        SUM ( fact_account_balance_monthly[balance] ),
+			        REMOVEFILTERS ( dim_date ),
+			        fact_account_balance_monthly[month_key] = Target,
+			        dim_product[product_family] = "DEPOSIT"
+			    )
+		formatString: #,0.00
+		displayFolder: Balances
+
+	measure 'Deposit Growth 3M' = DIVIDE ( [Deposits] - [Deposits 3M Ago], [Deposits 3M Ago] )
+		formatString: 0.0%
+		displayFolder: Balances
+
+	column month_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: month_key
+
+	column account_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: account_key
+
+	column customer_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column product_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	column balance
+		dataType: decimal
+		formatString: #,0.00
+		summarizeBy: none
+		sourceColumn: balance
+
+	partition fact_account_balance_monthly = entity
+		mode: directLake
+		source
+			entityName: fact_account_balance_monthly
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

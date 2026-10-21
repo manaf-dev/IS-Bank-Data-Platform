@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "profitability_card4",
+  "position": {
+    "x": 1020,
+    "y": 80,
+    "z": 7,
+    "height": 100,
+    "width": 240,
+    "tabOrder": 7
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "recon_gl_fees"
+                    }
+                  },
+                  "Property": "Reconciliation Breaks"
+                }
+              },
+              "queryRef": "recon_gl_fees.Reconciliation Breaks",
+              "nativeQueryRef": "Reconciliation Breaks"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

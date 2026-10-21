@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "fr_mode",
+  "position": {
+    "x": 650,
+    "y": 190,
+    "z": 9,
+    "height": 260,
+    "width": 300,
+    "tabOrder": 9
+  },
+  "visual": {
+    "visualType": "donutChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_card_transaction"
+                    }
+                  },
+                  "Property": "entry_mode"
+                }
+              },
+              "queryRef": "fact_card_transaction.entry_mode",
+              "nativeQueryRef": "entry_mode",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_card_transaction"
+                    }
+                  },
+                  "Property": "Card Value"
+                }
+              },
+              "queryRef": "fact_card_transaction.Card Value",
+              "nativeQueryRef": "Card Value"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

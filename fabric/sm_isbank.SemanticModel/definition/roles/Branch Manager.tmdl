@@ -1,0 +1,11 @@
+role 'Branch Manager'
+	modelPermission: read
+
+	tablePermission dim_branch = [branch_code] IN CALCULATETABLE ( VALUES ( sec_user_branch[branch_code] ), sec_user_branch[user_upn] = LOWER ( USERPRINCIPALNAME () ) )
+
+	tablePermission dim_account = [branch_code] IN CALCULATETABLE ( VALUES ( sec_user_branch[branch_code] ), sec_user_branch[user_upn] = LOWER ( USERPRINCIPALNAME () ) )
+
+	tablePermission dim_customer = [home_branch_code] IN CALCULATETABLE ( VALUES ( sec_user_branch[branch_code] ), sec_user_branch[user_upn] = LOWER ( USERPRINCIPALNAME () ) )
+
+	tablePermission sec_user_branch = [user_upn] = LOWER ( USERPRINCIPALNAME () )
+

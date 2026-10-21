@@ -36,11 +36,12 @@
 
 workspace_id = "fd3581c9-57eb-407a-9386-99a29953f818"
 bronze_lakehouse_id = "ddc6a9ea-98f6-47d9-b7b8-120882abf8d5"
-wheel_name = "isbank-0.3.0-py3-none-any.whl"
+wheel_name = "isbank-0.4.0-py3-none-any.whl"
 warehouse = "wh_gold"
 history_start = "2005-01-01"
 history_end = "2026-12-31"
 as_of = "2025-12-31"
+rls_grants = "{}"  # JSON {user_upn: [branch_code, ...]}; pass real UPNs at run time only
 
 # METADATA ********************
 
@@ -92,7 +93,20 @@ tables = model.build(
     dt.date.fromisoformat(history_start),
     dt.date.fromisoformat(history_end),
     dt.date.fromisoformat(as_of),
+    grants=json.loads(rls_grants),
 )
+
+def describe(exc: Exception) -> str:
+    """The Java exception and its cause chain; repr() of a Py4JJavaError hides both."""
+    java = getattr(exc, "java_exception", None)
+    if java is None:
+        return repr(exc)
+    chain = []
+    while java is not None and len(chain) < 8:
+        chain.append(str(java.toString()))
+        java = java.getCause()
+    return " | caused by: ".join(chain)
+
 
 order = sorted(tables, key=lambda name: (not name.startswith("dim_"), name))
 outcomes = []
@@ -105,8 +119,9 @@ for name in order:
         outcomes.append(StepOutcome(name, 0, rows, started, dt.datetime.now(dt.UTC)))
         print(f"{name:<30} rows={rows:>9}")
     except Exception as exc:  # record and continue; fail the run at the end
-        outcomes.append(StepOutcome(name, 0, 0, started, dt.datetime.now(dt.UTC), "FAILED", repr(exc)))
-        print(f"{name:<30} FAILED: {exc!r}"[:500])
+        error = describe(exc)[:4000]
+        outcomes.append(StepOutcome(name, 0, 0, started, dt.datetime.now(dt.UTC), "FAILED", error))
+        print(f"{name:<30} FAILED: {error}")
 
 spark.createDataFrame(audit_rows(run_id, "nb_gold_build", "gold", outcomes), AUDIT_SCHEMA) \
     .coalesce(1).write.format("delta").mode("append").saveAsTable(f"dbo.{AUDIT_TABLE}")

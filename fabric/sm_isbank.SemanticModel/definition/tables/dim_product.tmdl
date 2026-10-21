@@ -1,0 +1,30 @@
+table dim_product
+
+	column product_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column product_code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: product_code
+
+	column product_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: product_name
+
+	column product_family
+		dataType: string
+		summarizeBy: none
+		sourceColumn: product_family
+
+	partition dim_product = entity
+		mode: directLake
+		source
+			entityName: dim_product
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+

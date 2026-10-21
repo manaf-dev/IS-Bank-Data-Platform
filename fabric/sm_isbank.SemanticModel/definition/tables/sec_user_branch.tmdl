@@ -1,0 +1,29 @@
+/// Row-level security mapping: which user may see which branch.
+table sec_user_branch
+	isHidden
+
+	column user_upn
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: user_upn
+
+	column branch_code
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_code
+
+	column branch_key
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: branch_key
+
+	partition sec_user_branch = entity
+		mode: directLake
+		source
+			entityName: sec_user_branch
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+
