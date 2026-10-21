@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_gold_build",
+    "description": "Gold: build the star schema from Silver and load it into wh_gold (IS Bank Data Platform)."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "37766b89-fa02-8539-4377-64bf2a8377c3"
+  }
+}

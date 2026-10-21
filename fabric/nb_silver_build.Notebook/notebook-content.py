@@ -36,7 +36,7 @@
 
 workspace_id = "fd3581c9-57eb-407a-9386-99a29953f818"
 bronze_lakehouse_id = "ddc6a9ea-98f6-47d9-b7b8-120882abf8d5"
-wheel_name = "isbank-0.2.1-py3-none-any.whl"
+wheel_name = "isbank-0.3.0-py3-none-any.whl"
 
 # METADATA ********************
 
@@ -96,15 +96,15 @@ for o in result.outcomes:
     print(f"{o.table:<22} {o.status:<9} rows={o.rows:>9} {o.message[:200]}")
 
 if result.dq_results:
-    spark.createDataFrame(result.dq_results, RESULTS_SCHEMA).write.format("delta").mode("append").saveAsTable("dbo.dq_results")
+    spark.createDataFrame(result.dq_results, RESULTS_SCHEMA).coalesce(1).write.format("delta").mode("append").saveAsTable("dbo.dq_results")
 quarantine = [q for q in result.quarantine]
 if quarantine:
     combined = quarantine[0]
     for q in quarantine[1:]:
         combined = combined.unionByName(q)
-    combined.write.format("delta").mode("append").saveAsTable("dbo.dq_quarantine")
+    combined.coalesce(1).write.format("delta").mode("append").saveAsTable("dbo.dq_quarantine")
 spark.createDataFrame(audit_rows(run_id, "nb_silver_build", "silver", result.outcomes), AUDIT_SCHEMA) \
-    .write.format("delta").mode("append").saveAsTable(f"dbo.{AUDIT_TABLE}")
+    .coalesce(1).write.format("delta").mode("append").saveAsTable(f"dbo.{AUDIT_TABLE}")
 
 failed = [o.table for o in result.outcomes if o.status != "SUCCEEDED"]
 summary = {
