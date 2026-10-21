@@ -245,3 +245,7 @@ mlartifacts/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Power BI Desktop local files inside PBIP item folders (per user, not definitions)
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
