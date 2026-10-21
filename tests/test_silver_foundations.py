@@ -98,3 +98,23 @@ def test_dq_quarantines_and_counts(spark):
 def test_rule_rejects_unknown_severity():
     with pytest.raises(ValueError, match="severity"):
         Rule("x", "true", severity="drop")
+
+
+def test_silver_writes_are_coalesced(spark):
+    from isbank.silver import pipeline
+
+    bronze = (
+        spark.range(30)
+        .selectExpr(
+            "concat('BR', lpad(cast(id as string), 3, '0')) as branch_code",
+            "'X' as branch_name",
+            "'Accra' as city",
+            "'GA' as region",
+            "'2010-01-01' as opened_date",
+            "current_timestamp() as _ingested_at",
+        )
+        .repartition(50)
+    )
+    written = {}
+    pipeline.run(spark, lambda _: bronze, written.__setitem__, "r", tables=pipeline.TABLES[:1])
+    assert written["branch"].rdd.getNumPartitions() == 1

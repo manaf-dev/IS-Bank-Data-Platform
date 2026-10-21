@@ -57,3 +57,13 @@ def latest_per_key(df, keys: list[str], order_by: list[Column]):
     """Keep one row per key: the first row by `order_by` (pass descending columns for latest)."""
     window = Window.partitionBy(*keys).orderBy(*order_by)
     return df.withColumn("__rn", F.row_number().over(window)).where("__rn = 1").drop("__rn")
+
+
+def name_key(col: Column) -> Column:
+    """Order-insensitive name key: standardised name tokens, sorted and joined.
+
+    `MENSAH Kwame`, `Kwame Mensah`, and `MENSAH, KWAME` all give `KWAME MENSAH`, so sources that
+    order names differently can still be compared.
+    """
+    tokens = F.split(person_name(col), " ")
+    return F.when(person_name(col) != "", F.array_join(F.array_sort(tokens), " "))

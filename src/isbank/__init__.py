@@ -5,4 +5,4 @@ notebooks import and call. Must never depend on the `generator` package or the
 answer key.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.1"

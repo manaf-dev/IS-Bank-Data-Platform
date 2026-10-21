@@ -47,3 +47,15 @@ def audit_rows(run_id: str, notebook: str, step: str, outcomes: list[StepOutcome
         }
         for o in outcomes
     ]
+
+
+ROWS_PER_FILE = 2_000_000
+
+
+def output_files(rows: int, rows_per_file: int = ROWS_PER_FILE) -> int:
+    """How many files to write for `rows` rows.
+
+    Spark otherwise writes one file per shuffle partition (200 by default), so even a 15-row
+    table becomes 200 tiny files, which slows every reader (the small-file problem).
+    """
+    return max(1, -(-rows // rows_per_file))
