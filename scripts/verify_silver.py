@@ -39,20 +39,30 @@ def connect(workspace: str, lakehouse: str):
     fs = DataLakeServiceClient(ONELAKE, credential=cred).get_file_system_client(workspace)
 
     def read(table: str, columns: list[str] | None = None) -> pd.DataFrame:
-        actions = pa.table(
-            DeltaTable(f"{root}/{table}", storage_options=opts).get_add_actions(flatten=True)
-        ).to_pandas()
+        delta = DeltaTable(f"{root}/{table}", storage_options=opts)
+        actions = pa.table(delta.get_add_actions(flatten=True)).to_pandas()
         dv = [c for c in actions.columns if "deletion" in c.lower()]
         if any(actions[c].notna().any() for c in dv):
             raise RuntimeError(f"{table} has deletion vectors; direct file reads would be wrong")
 
+        # Warehouse tables use Delta column mapping: Parquet stores physical names
+        # (col-<uuid>) and the logical names live only in the Delta schema.
+        physical = {
+            f.name: (f.metadata or {}).get("delta.columnMapping.physicalName", f.name)
+            for f in delta.schema().fields
+        }
+        wanted = columns or list(physical)
+        to_logical = {physical[c]: c for c in wanted}
+
         def fetch(path: str) -> pa.Table:
             client = fs.get_file_client(f"{lakehouse}/Tables/dbo/{table}/{path}")
-            return pq.read_table(io.BytesIO(client.download_file().readall()), columns=columns)
+            data = io.BytesIO(client.download_file().readall())
+            part = pq.read_table(data, columns=[physical[c] for c in wanted])
+            return part.rename_columns([to_logical[n] for n in part.column_names])
 
         with ThreadPoolExecutor(max_workers=32) as pool:
             parts = list(pool.map(fetch, actions["path"].tolist()))
-        return pa.concat_tables(parts).to_pandas() if parts else pd.DataFrame(columns=columns)
+        return pa.concat_tables(parts).to_pandas() if parts else pd.DataFrame(columns=wanted)
 
     return read
 
