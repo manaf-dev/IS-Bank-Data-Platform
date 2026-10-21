@@ -33,7 +33,7 @@
 
 workspace_id = "fd3581c9-57eb-407a-9386-99a29953f818"
 lakehouse_id = "ddc6a9ea-98f6-47d9-b7b8-120882abf8d5"
-wheel_name = "isbank-0.1.0-py3-none-any.whl"
+wheel_name = "isbank-0.2.1-py3-none-any.whl"
 systems = ""  # comma-separated subset of source systems; empty = all enabled sources
 
 # METADATA ********************
