@@ -1,6 +1,6 @@
 [project]
 name = "isbank"
-version = "0.1.0"
+version = "0.2.0"
 description = "Shared platform library for the IS Bank data platform on Microsoft Fabric (DQ rules, entity resolution, transformations)."
 readme = "README.md"
 # Matches the Python version of Fabric Spark Runtime 2.0, the runtime the Dev workspace uses.
@@ -47,6 +47,8 @@ packages = ["src/isbank"]
 line-length = 100
 target-version = "py313"
 src = ["src", "."]
+# Fabric serialises items under fabric/; never reformat or "fix" those files (CLAUDE.md section 7).
+extend-exclude = ["fabric"]
 
 [tool.ruff.lint]
 select = [
