@@ -73,6 +73,8 @@ def test_dimension_keys_are_unique(gold, table, column):
         ("fact_transaction", "channel_key", "dim_channel", "channel_key"),
         ("fact_transaction", "date_key", "dim_date", "date_key"),
         ("fact_loan", "account_key", "dim_account", "account_key"),
+        ("fact_loan_payment", "branch_key", "dim_branch", "branch_key"),
+        ("fact_loan_payment", "customer_key", "dim_customer", "customer_key"),
         ("fact_card_transaction", "merchant_key", "dim_merchant", "merchant_key"),
         ("fact_card_transaction", "date_key", "dim_date", "date_key"),
         ("fact_digital_event", "customer_key", "dim_customer", "customer_key"),
@@ -151,3 +153,19 @@ def test_dates_cover_the_history(gold):
     dates = gold["dim_date"]["date"]
     assert pd.Timestamp(dates.min()) <= pd.Timestamp("2005-01-01")
     assert pd.Timestamp(dates.max()) >= pd.Timestamp("2026-12-31")
+
+
+def test_every_branch_has_a_manager_and_grants_are_added(spark, gold):
+    access = gold["sec_user_branch"]
+    branches = set(gold["dim_branch"]["branch_code"])
+    managers = access[access["user_upn"].str.startswith("manager.")]
+    assert set(managers["branch_code"]) == branches
+    assert managers.groupby("user_upn")["branch_code"].nunique().eq(1).all()
+
+    dim_br = spark.createDataFrame(gold["dim_branch"][["branch_key", "branch_code"]])
+    granted = model.sec_user_branch(
+        spark, dim_br, {" Demo.User@Example.com ": ["BR001", "BR002", "BR999"]}
+    ).toPandas()
+    demo = granted[granted["user_upn"] == "demo.user@example.com"]
+    assert sorted(demo["branch_code"]) == ["BR001", "BR002"]  # unknown codes are dropped
+    assert demo["branch_key"].notna().all()

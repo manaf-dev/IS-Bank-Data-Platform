@@ -32,6 +32,7 @@ FOREIGN_KEYS = [
     ("fact_account_balance_monthly", "account_key", "dim_account"),
     ("fact_loan", "account_key", "dim_account"),
     ("fact_loan_payment", "account_key", "dim_account"),
+    ("fact_loan_payment", "branch_key", "dim_branch"),
     ("fact_card_transaction", "merchant_key", "dim_merchant"),
     ("fact_card_transaction", "date_key", "dim_date"),
     ("fact_digital_event", "customer_key", "dim_customer"),

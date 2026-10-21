@@ -320,15 +320,34 @@ def fact_loan(
     )
 
 
-def fact_loan_payment(loan_repayment: DataFrame) -> DataFrame:
-    """One row per loan instalment."""
-    return loan_repayment.select(
-        key("loan_account_number").alias("account_key"),
-        "installment_no",
-        date_key(F.col("due_date")).alias("due_date_key"),
-        "amount_due",
-        "amount_paid",
-        "is_missed",
+def fact_loan_payment(loan_repayment: DataFrame, dim_acc: DataFrame) -> DataFrame:
+    """One row per loan instalment.
+
+    Customer, product, and branch keys are carried from the account so the semantic model can
+    filter instalments directly, without a second (ambiguous) path through dim_account.
+    """
+    acc = dim_acc.select("account_key", "customer_key", "product_key", "branch_key")
+    return (
+        loan_repayment.select(
+            key("loan_account_number").alias("account_key"),
+            "installment_no",
+            date_key(F.col("due_date")).alias("due_date_key"),
+            "amount_due",
+            "amount_paid",
+            "is_missed",
+        )
+        .join(acc, "account_key", "left")
+        .select(
+            "account_key",
+            F.coalesce("customer_key", F.lit(UNKNOWN_KEY)).alias("customer_key"),
+            F.coalesce("product_key", F.lit(UNKNOWN_KEY)).alias("product_key"),
+            F.coalesce("branch_key", F.lit(UNKNOWN_KEY)).alias("branch_key"),
+            "installment_no",
+            "due_date_key",
+            "amount_due",
+            "amount_paid",
+            "is_missed",
+        )
     )
 
 
@@ -427,16 +446,52 @@ def recon_gl_fees(gl_pnl: DataFrame, transaction: DataFrame, account: DataFrame)
 # ---------------------------------------------------------------------- build
 
 
+def sec_user_branch(
+    spark, dim_br: DataFrame, grants: dict[str, list[str]] | None = None
+) -> DataFrame:
+    """Which user may see which branch, for dynamic row-level security in the semantic model.
+
+    Every branch gets a fictional manager (manager.<branch code>@isbank.example). Extra
+    grants (user principal name -> branch codes) come from a run parameter, so real
+    identities used for demos never live in the repository. Names are lower-cased because
+    the RLS rule compares them with LOWER(USERPRINCIPALNAME()).
+    """
+    managers = dim_br.select(
+        F.concat(F.lit("manager."), F.lower("branch_code"), F.lit("@isbank.example")).alias(
+            "user_upn"
+        ),
+        "branch_code",
+    )
+    extra = [(upn.strip().lower(), code) for upn, codes in (grants or {}).items() for code in codes]
+    if extra:
+        import pandas as pd
+
+        managers = managers.unionByName(
+            spark.createDataFrame(pd.DataFrame(extra, columns=["user_upn", "branch_code"]))
+        )
+    return (
+        managers.join(dim_br.select("branch_code", "branch_key"), "branch_code")
+        .select("user_upn", "branch_code", "branch_key")
+        .dropDuplicates(["user_upn", "branch_code"])
+    )
+
+
 def build(
-    spark, silver: dict[str, DataFrame], start: dt.date, end: dt.date, as_of: dt.date
+    spark,
+    silver: dict[str, DataFrame],
+    start: dt.date,
+    end: dt.date,
+    as_of: dt.date,
+    grants: dict[str, list[str]] | None = None,
 ) -> dict[str, DataFrame]:
-    """Every Gold table from the Silver tables."""
+    """Every Gold table from the Silver tables; `grants` adds RLS branch access per user."""
     s = silver
+    branches = dim_branch(s["branch"])
     accounts = dim_account(s["account"], s["party_xref"])
     users = app_user_customers(s["app_event"], s["transaction"], s["account"], s["party_xref"])
     return {
         "dim_date": dim_date(spark, start, end),
-        "dim_branch": dim_branch(s["branch"]),
+        "dim_branch": branches,
         "dim_product": dim_product(s["product"]),
         "dim_channel": dim_channel(s["transaction"]),
         "dim_customer": dim_customer(s["customer_history"], s["party_xref"], as_of),
@@ -447,7 +502,7 @@ def build(
         "fact_loan": fact_loan(
             accounts, s["loan_repayment"], s["loan_application"], s["bureau_score"], s["party_xref"]
         ),
-        "fact_loan_payment": fact_loan_payment(s["loan_repayment"]),
+        "fact_loan_payment": fact_loan_payment(s["loan_repayment"], accounts),
         "fact_card_transaction": fact_card_transaction(
             s["card_authorisation"], s["card"], accounts
         ),
@@ -455,4 +510,5 @@ def build(
         "fact_gl_entry": fact_gl_entry(s["gl_pnl"]),
         "recon_gl_fees": recon_gl_fees(s["gl_pnl"], s["transaction"], s["account"]),
         "app_user_link": users,
+        "sec_user_branch": sec_user_branch(spark, branches, grants),
     }
