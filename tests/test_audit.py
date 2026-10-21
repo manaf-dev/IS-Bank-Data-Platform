@@ -18,3 +18,13 @@ def test_audit_rows_carry_duration_and_status():
     assert rows[0]["status"] == "SUCCEEDED"
     assert rows[1]["status"] == "FAILED"
     assert len(rows[1]["message"]) == 2000
+
+
+def test_output_files_sizes_by_rows():
+    from isbank.audit import output_files
+
+    assert output_files(0) == 1
+    assert output_files(15) == 1
+    assert output_files(2_000_000) == 1
+    assert output_files(2_000_001) == 2
+    assert output_files(7_000_000) == 4

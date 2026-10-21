@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from pyspark.sql import functions as F
 
-from isbank.audit import StepOutcome
+from isbank.audit import StepOutcome, output_files
 from isbank.dq import Rule, apply_rules
 from isbank.silver import core, events, finance, loans, resolution
 from isbank.silver.standardize import latest_per_key
@@ -162,7 +162,7 @@ def run(
             )
             clean = (dq.clean if dq else df).cache()
             rows = clean.count()
-            write_silver(table.name, clean)
+            write_silver(table.name, clean.coalesce(output_files(rows)))
             built[table.name] = clean
             if dq:
                 result.dq_results.extend(dq.results)
@@ -193,7 +193,7 @@ def run(
         )
         xref = resolution.resolve(spark, recs).cache()
         rows = xref.count()
-        write_silver("party_xref", xref)
+        write_silver("party_xref", xref.coalesce(output_files(rows)))
         result.outcomes.append(StepOutcome("party_xref", 3, rows, started, dt.datetime.now(dt.UTC)))
     except Exception as exc:
         result.outcomes.append(

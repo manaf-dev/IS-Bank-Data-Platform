@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 from typing import Protocol
 
+from isbank.audit import output_files
 from isbank.bronze.files import LandedFile, group_by_header, new_files, workbook_cells
 from isbank.bronze.sources import SourceSpec
 
@@ -159,7 +160,7 @@ def ingest_source(
             r["_source_file"]: r["n"]
             for r in df.groupBy("_source_file").count().withColumnRenamed("count", "n").collect()
         }
-        store.write(df, spec.table, list(counts))
+        store.write(df.coalesce(output_files(sum(counts.values()))), spec.table, list(counts))
         df.unpersist()
         by_key = {relative_key(path): n for path, n in counts.items()}
         store.log(
