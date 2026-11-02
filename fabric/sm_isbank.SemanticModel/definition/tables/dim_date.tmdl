@@ -1,9 +1,11 @@
 table dim_date
+	lineageTag: 2659e6ad-9b62-4c4f-86e7-0365db4e003f
 	dataCategory: Time
 
 	column date_key
 		dataType: int64
 		isHidden
+		lineageTag: 98012971-b32d-4016-9495-8e0bd9598afe
 		summarizeBy: none
 		sourceColumn: date_key
 
@@ -11,29 +13,34 @@ table dim_date
 		dataType: dateTime
 		isKey
 		formatString: yyyy-mm-dd
+		lineageTag: b9ab2a4c-4fa2-4b12-8f73-9dffafd99cb0
 		summarizeBy: none
 		sourceColumn: date
 
 	column year
 		dataType: int64
 		formatString: 0
+		lineageTag: a1ba8ac8-b27b-420f-b055-f1a725153139
 		summarizeBy: none
 		sourceColumn: year
 
 	column quarter
 		dataType: int64
 		formatString: 0
+		lineageTag: f1f1f67c-59bc-4d4d-9990-91b8b9a559a4
 		summarizeBy: none
 		sourceColumn: quarter
 
 	column month
 		dataType: int64
 		formatString: 0
+		lineageTag: 3eaf334e-1d35-420f-a3a7-ee3d9305731c
 		summarizeBy: none
 		sourceColumn: month
 
 	column month_name
 		dataType: string
+		lineageTag: 0d45946a-5d31-401f-b2df-15d3cebb7ec6
 		summarizeBy: none
 		sourceColumn: month_name
 		sortByColumn: month
@@ -41,27 +48,32 @@ table dim_date
 	column month_key
 		dataType: int64
 		isHidden
+		lineageTag: 9029b999-dfcb-4c18-9af2-25464bc9129d
 		summarizeBy: none
 		sourceColumn: month_key
 
 	column day_of_month
 		dataType: int64
 		formatString: 0
+		lineageTag: 93c8191e-72c5-4ab9-b9d6-7ebca5c10b6c
 		summarizeBy: none
 		sourceColumn: day_of_month
 
 	column day_name
 		dataType: string
+		lineageTag: 4ecae774-65c6-4961-943f-f8720e3c6858
 		summarizeBy: none
 		sourceColumn: day_name
 
 	column is_weekend
 		dataType: boolean
+		lineageTag: 765769dd-4b34-4d39-991b-cddad04f8038
 		summarizeBy: none
 		sourceColumn: is_weekend
 
 	column is_month_end
 		dataType: boolean
+		lineageTag: fec6254a-1cc1-46c5-95db-5701e24a984d
 		summarizeBy: none
 		sourceColumn: is_month_end
 

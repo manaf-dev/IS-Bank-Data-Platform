@@ -1,28 +1,35 @@
 table fact_digital_event
+	lineageTag: 42f31c2e-a3ce-4008-825e-3667595e3da7
 
 	measure 'Digital Events' = COUNTROWS ( fact_digital_event )
 		formatString: #,0
 		displayFolder: Digital
+		lineageTag: 27a5cd75-5cfa-4772-bc7a-a18a4e4dd9bd
 
 	measure 'Digital Users' = DISTINCTCOUNT ( fact_digital_event[user_id] )
 		formatString: #,0
 		displayFolder: Digital
+		lineageTag: 198a405d-9c6b-440f-a5e8-a7fa7d54835f
 
 	measure 'Digital Customers' = CALCULATE ( DISTINCTCOUNT ( fact_digital_event[customer_key] ), fact_digital_event[customer_key] <> -1 )
 		formatString: #,0
 		displayFolder: Digital
+		lineageTag: 8ba62bf6-6376-4da8-bf0d-b89ad1a9ce25
 
 	measure 'Digital Adoption' = DIVIDE ( [Digital Customers], [Active Customers] )
 		formatString: 0.0%
 		displayFolder: Digital
+		lineageTag: 9b256aef-fe55-47ac-92fa-90c20a59ba88
 
 	measure 'App Logins' = CALCULATE ( [Digital Events], fact_digital_event[event_type] = "LOGIN_SUCCESS" )
 		formatString: #,0
 		displayFolder: Digital
+		lineageTag: a183e2c9-16cb-454c-a8a8-d5431fd26023
 
 	measure 'Biometric Login Share' = DIVIDE ( CALCULATE ( [App Logins], fact_digital_event[biometric_used] = TRUE () ), [App Logins] )
 		formatString: 0.0%
 		displayFolder: Digital
+		lineageTag: d0ef7703-07c1-4e8b-b4be-846251f01dc9
 
 	measure 'Digital Payment Value' =
 			CALCULATE (
@@ -31,10 +38,12 @@ table fact_digital_event
 			)
 		formatString: #,0.00
 		displayFolder: Digital
+		lineageTag: a84ac3f9-1367-48cc-99e0-76a1486b6c55
 
 	measure 'MoMo Inflow' = -CALCULATE ( SUM ( fact_digital_event[amount] ), fact_digital_event[event_type] = "MOMO_PULL" )
 		formatString: #,0.00
 		displayFolder: Digital
+		lineageTag: c6b4e1f8-6f8d-406c-8237-4353e28828df
 
 	measure 'Failed Login Rate' =
 			DIVIDE (
@@ -43,70 +52,83 @@ table fact_digital_event
 			)
 		formatString: 0.0%
 		displayFolder: Digital
+		lineageTag: 6651ffb2-7149-45c4-9cc1-12fbb25426b4
 
 	column event_id
 		dataType: string
 		isHidden
+		lineageTag: b95dd586-1782-4b05-9b8f-b8640a412fc6
 		summarizeBy: none
 		sourceColumn: event_id
 
 	column date_key
 		dataType: int64
 		isHidden
+		lineageTag: 4458cffd-01f5-4654-9f12-72a68cf8c55f
 		summarizeBy: none
 		sourceColumn: date_key
 
 	column event_ts
 		dataType: dateTime
+		lineageTag: 73ce5ce5-115d-4e4c-9423-fe1cf66e56bb
 		summarizeBy: none
 		sourceColumn: event_ts
 
 	column event_type
 		dataType: string
+		lineageTag: c3d258ce-3a96-4c47-bb9a-9338ae88c7c1
 		summarizeBy: none
 		sourceColumn: event_type
 
 	column customer_key
 		dataType: int64
 		isHidden
+		lineageTag: ef0ecaa7-70ab-423c-a13c-44a0f1a46ba1
 		summarizeBy: none
 		sourceColumn: customer_key
 
 	column user_id
 		dataType: string
 		isHidden
+		lineageTag: 8627f915-0f09-4841-a43b-fc2e5e6ef3a6
 		summarizeBy: none
 		sourceColumn: user_id
 
 	column device_os
 		dataType: string
+		lineageTag: d2d3ef63-2710-4e03-9434-0bbfa5740925
 		summarizeBy: none
 		sourceColumn: device_os
 
 	column app_major_version
 		dataType: int64
 		formatString: 0
+		lineageTag: b00c0740-e15e-4e89-ac6f-5278a96d523d
 		summarizeBy: none
 		sourceColumn: app_major_version
 
 	column biometric_used
 		dataType: boolean
+		lineageTag: 25a101b8-7175-4140-bb56-b1d6f15c81d8
 		summarizeBy: none
 		sourceColumn: biometric_used
 
 	column status
 		dataType: string
+		lineageTag: aff34277-06ef-4e99-86c9-806c7ce11dfe
 		summarizeBy: none
 		sourceColumn: status
 
 	column amount
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: a26ce170-1d51-4c19-9170-4bcba340e7da
 		summarizeBy: none
 		sourceColumn: amount
 
 	column is_late
 		dataType: boolean
+		lineageTag: a2e4be01-b38b-4f28-aac8-cae62f241541
 		summarizeBy: none
 		sourceColumn: is_late
 

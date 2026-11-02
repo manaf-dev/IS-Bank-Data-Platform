@@ -1,39 +1,47 @@
 table dim_branch
+	lineageTag: 17ff19e3-55b0-4897-8fdb-acf0252c3cc2
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: f839a2f7-d25c-4c79-ad7a-3903f8becc36
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column branch_code
 		dataType: string
+		lineageTag: 6c7da546-a5b0-4d55-95a0-059ed100c2de
 		summarizeBy: none
 		sourceColumn: branch_code
 
 	column branch_name
 		dataType: string
+		lineageTag: 0e60edf5-a9a9-43b6-9dfa-f06a5536cabd
 		summarizeBy: none
 		sourceColumn: branch_name
 
 	column city
 		dataType: string
+		lineageTag: a1c30954-c72e-4112-9994-e5a02439730c
 		summarizeBy: none
 		sourceColumn: city
 
 	column region
 		dataType: string
+		lineageTag: b9753581-c36f-4c0b-b651-5b9e798567c6
 		summarizeBy: none
 		sourceColumn: region
 
 	column opened_date
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: dbfbb135-7fc4-4314-811c-af0e3ca33b9f
 		summarizeBy: none
 		sourceColumn: opened_date
 
 	column cost_centre
 		dataType: string
+		lineageTag: 8ccf8cb9-336d-4d3c-bf94-904f93ce6632
 		summarizeBy: none
 		sourceColumn: cost_centre
 

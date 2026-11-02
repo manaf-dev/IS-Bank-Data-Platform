@@ -1,25 +1,31 @@
 /// Loan book snapshot as of 2025-12-31. Disbursal date relationship is inactive.
 table fact_loan
+	lineageTag: 80f76a2e-5aba-4a6a-b884-f57e147c42dc
 
 	measure Loans = COUNTROWS ( fact_loan )
 		formatString: #,0
 		displayFolder: Loan Book
+		lineageTag: 41be5c1e-0d49-4c1d-add8-8931fe1f3693
 
 	measure 'Loan Principal' = SUM ( fact_loan[principal] )
 		formatString: #,0.00
 		displayFolder: Loan Book
+		lineageTag: b8f3d92e-4b6c-4b48-a9ee-819d0811597a
 
 	measure 'Amount Repaid' = SUM ( fact_loan[amount_repaid] )
 		formatString: #,0.00
 		displayFolder: Loan Book
+		lineageTag: 93adbf7b-98ea-4331-af1c-22017496ceed
 
 	measure 'Open Loans' = CALCULATE ( [Loans], fact_loan[loan_status] IN { "PERFORMING", "ARREARS", "DEFAULT" } )
 		formatString: #,0
 		displayFolder: Loan Book
+		lineageTag: c29ec68f-4ed3-46e0-9708-4fba94e11d94
 
 	measure 'Defaulted Loans' = CALCULATE ( [Loans], fact_loan[loan_status] = "DEFAULT" )
 		formatString: #,0
 		displayFolder: Loan Book
+		lineageTag: 5648a05a-14bc-43e4-ab7a-bbc09de2998f
 
 	measure 'NPL Ratio' =
 			-- Non-performing (arrears or default) principal over the open book.
@@ -29,110 +35,130 @@ table fact_loan
 			)
 		formatString: 0.0%
 		displayFolder: Loan Book
+		lineageTag: d9947862-4d18-416c-952a-7466f84709c9
 
 	measure 'Default Rate' = DIVIDE ( [Defaulted Loans], [Loans] )
 		formatString: 0.0%
 		displayFolder: Loan Book
+		lineageTag: 8e52951f-e8df-451b-9b06-26c9497a7f7a
 
 	measure 'Avg Bureau Score' = AVERAGE ( fact_loan[bureau_score] )
 		formatString: 0
 		displayFolder: Loan Book
+		lineageTag: 9e53fc3f-2e8f-4cc4-9752-9a754d490309
 
 	measure 'Loans Disbursed' = CALCULATE ( [Loans], USERELATIONSHIP ( fact_loan[disbursed_date_key], dim_date[date_key] ) )
 		formatString: #,0
 		displayFolder: Loan Book
+		lineageTag: 983db720-958e-4227-b24d-f82a7de5a3f7
 
 	column account_key
 		dataType: int64
 		isHidden
+		lineageTag: 2ab099fb-d478-4de2-ba82-de31ab5df467
 		summarizeBy: none
 		sourceColumn: account_key
 
 	column customer_key
 		dataType: int64
 		isHidden
+		lineageTag: f7ca98f9-7364-4443-bf83-b9baa23c807b
 		summarizeBy: none
 		sourceColumn: customer_key
 
 	column product_key
 		dataType: int64
 		isHidden
+		lineageTag: f06d0047-c194-4c65-9fea-5c0f7c8771a5
 		summarizeBy: none
 		sourceColumn: product_key
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: 232ee7f6-46cc-46f3-9d3f-2ccf81ba15f4
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column disbursed_date_key
 		dataType: int64
 		isHidden
+		lineageTag: 332c51bb-91b3-4ead-8cec-63db3f1b3f09
 		summarizeBy: none
 		sourceColumn: disbursed_date_key
 
 	column principal
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 8f0d70ad-c68c-4303-a294-fa212112d7db
 		summarizeBy: none
 		sourceColumn: principal
 
 	column interest_rate_pct
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 4c23020a-9032-4805-bdc7-7b149bac0441
 		summarizeBy: none
 		sourceColumn: interest_rate_pct
 
 	column term_months
 		dataType: int64
 		formatString: 0
+		lineageTag: 25ff2f0f-2a8f-419b-a3fb-26aa24f7facb
 		summarizeBy: none
 		sourceColumn: term_months
 
 	column instalments_due
 		dataType: int64
 		formatString: 0
+		lineageTag: e1d6535b-2278-45f1-b8ba-0c3d0649579c
 		summarizeBy: none
 		sourceColumn: instalments_due
 
 	column instalments_missed
 		dataType: int64
 		formatString: 0
+		lineageTag: ccf587a9-6311-47ba-8a77-51d602a1ebbd
 		summarizeBy: none
 		sourceColumn: instalments_missed
 
 	column amount_repaid
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: ed4670b3-3be6-4bc3-bbe6-fc33864b1a9a
 		summarizeBy: none
 		sourceColumn: amount_repaid
 
 	column last_missed_date
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: 4434ec33-672f-421b-883f-a7685230bba6
 		summarizeBy: none
 		sourceColumn: last_missed_date
 
 	column applicant_monthly_income
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 8573fd3c-f3e6-4e5e-a747-b0c92e25f1f6
 		summarizeBy: none
 		sourceColumn: applicant_monthly_income
 
 	column employer_type
 		dataType: string
+		lineageTag: 407a0b91-8629-4dff-93db-0fa63d09920d
 		summarizeBy: none
 		sourceColumn: employer_type
 
 	column bureau_score
 		dataType: int64
 		formatString: 0
+		lineageTag: 4156288c-a7fc-49f5-8699-eaabb2c24aa1
 		summarizeBy: none
 		sourceColumn: bureau_score
 
 	column loan_status
 		dataType: string
+		lineageTag: 577d7750-736e-4499-a97b-71adcffe83df
 		summarizeBy: none
 		sourceColumn: loan_status
 

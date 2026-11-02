@@ -1,28 +1,34 @@
 table dim_merchant
+	lineageTag: 0641cdcd-57ef-40fe-80bc-3fe78b6ab0c9
 
 	column merchant_key
 		dataType: int64
 		isHidden
+		lineageTag: 2d6c0b5e-05eb-410e-9fe9-0dbaf49f97ad
 		summarizeBy: none
 		sourceColumn: merchant_key
 
 	column merchant_id
 		dataType: string
+		lineageTag: 09662323-2b65-4827-8f11-c0d002c1508b
 		summarizeBy: none
 		sourceColumn: merchant_id
 
 	column merchant_name
 		dataType: string
+		lineageTag: 847dcf6c-716f-491e-99b5-4a8dafd20270
 		summarizeBy: none
 		sourceColumn: merchant_name
 
 	column mcc
 		dataType: string
+		lineageTag: 1c07cabe-f2aa-46a7-be33-2e2e9b79aa8a
 		summarizeBy: none
 		sourceColumn: mcc
 
 	column merchant_city
 		dataType: string
+		lineageTag: 75769ba1-1f34-4fd7-91fb-d68e6c0d03c3
 		summarizeBy: none
 		sourceColumn: merchant_city
 

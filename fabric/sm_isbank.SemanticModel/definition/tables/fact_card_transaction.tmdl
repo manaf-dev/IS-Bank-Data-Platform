@@ -1,24 +1,30 @@
 table fact_card_transaction
+	lineageTag: a389e349-3db7-4589-aaaf-655af27a6dab
 
 	measure 'Card Transactions' = COUNTROWS ( fact_card_transaction )
 		formatString: #,0
 		displayFolder: Cards
+		lineageTag: 57d7a9ba-7dcc-411b-a2ed-afb5ad4b46c3
 
 	measure 'Card Value' = SUM ( fact_card_transaction[amount] )
 		formatString: #,0.00
 		displayFolder: Cards
+		lineageTag: e03cbba0-283d-4f3d-8654-396538211949
 
 	measure 'Card Decline Rate' = DIVIDE ( CALCULATE ( [Card Transactions], fact_card_transaction[is_approved] = FALSE () ), [Card Transactions] )
 		formatString: 0.0%
 		displayFolder: Cards
+		lineageTag: cbc479a3-9005-44fa-93cf-f142d38b390b
 
 	measure 'Night-time Share' = DIVIDE ( CALCULATE ( [Card Transactions], fact_card_transaction[is_night] = TRUE () ), [Card Transactions] )
 		formatString: 0.0%
 		displayFolder: Fraud Signals
+		lineageTag: 1bc1a71f-01bb-44a3-8ffc-ae45087acfb2
 
 	measure 'Night-time Card Value' = CALCULATE ( [Card Value], fact_card_transaction[is_night] = TRUE () )
 		formatString: #,0.00
 		displayFolder: Fraud Signals
+		lineageTag: d7be58f3-17d6-4ee0-b049-d9a4373d25e5
 
 	measure 'Card-testing Alerts' =
 			-- Card-days with 5+ probes of GHS 10 or less: the classic test-then-cash-out pattern.
@@ -37,96 +43,114 @@ table fact_card_transaction
 			    )
 		formatString: #,0
 		displayFolder: Fraud Signals
+		lineageTag: 3897f096-ca8c-47ca-b42a-d6a18a174551
 
 	measure 'E-commerce Share' = DIVIDE ( CALCULATE ( [Card Transactions], fact_card_transaction[entry_mode] = "ECOMMERCE" ), [Card Transactions] )
 		formatString: 0.0%
 		displayFolder: Cards
+		lineageTag: 9d15803b-b980-4fac-b3fc-16fed3f85932
 
 	column event_id
 		dataType: string
 		isHidden
+		lineageTag: 86ca4966-e4c6-4365-b1ba-4d9d165a86cd
 		summarizeBy: none
 		sourceColumn: event_id
 
 	column date_key
 		dataType: int64
 		isHidden
+		lineageTag: 30e92a8a-f64d-4572-9103-933386973877
 		summarizeBy: none
 		sourceColumn: date_key
 
 	column event_ts
 		dataType: dateTime
+		lineageTag: 3aceee00-cefa-4038-ba2f-f0542877c252
 		summarizeBy: none
 		sourceColumn: event_ts
 
 	column hour_of_day
 		dataType: int64
 		formatString: 0
+		lineageTag: 79634a19-708e-4669-8451-f51b21212d41
 		summarizeBy: none
 		sourceColumn: hour_of_day
 
 	column is_night
 		dataType: boolean
+		lineageTag: b7c4fa6f-688b-40cb-bb19-9928c16eb079
 		summarizeBy: none
 		sourceColumn: is_night
 
 	column merchant_key
 		dataType: int64
 		isHidden
+		lineageTag: ce838d58-f14b-4c70-ab13-81464659babc
 		summarizeBy: none
 		sourceColumn: merchant_key
 
 	column account_key
 		dataType: int64
 		isHidden
+		lineageTag: bf4cc404-ccaf-4095-a1e7-3aa70f542046
 		summarizeBy: none
 		sourceColumn: account_key
 
 	column customer_key
 		dataType: int64
 		isHidden
+		lineageTag: 9d3843fd-d3eb-4652-829b-6bcb116b3232
 		summarizeBy: none
 		sourceColumn: customer_key
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: bcfb23bc-fd3a-4fa3-95a7-5d1872f4a979
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column txn_kind
 		dataType: string
+		lineageTag: dc896a10-649f-4856-93f5-764af33e38bf
 		summarizeBy: none
 		sourceColumn: txn_kind
 
 	column entry_mode
 		dataType: string
+		lineageTag: a5db9a79-bcc6-4242-9d5b-d9f30f71b60b
 		summarizeBy: none
 		sourceColumn: entry_mode
 
 	column merchant_city
 		dataType: string
+		lineageTag: 0d963b44-848d-4230-b5c1-2603b4a5be3d
 		summarizeBy: none
 		sourceColumn: merchant_city
 
 	column amount
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 16c27096-4dbd-49df-96dd-3c8006e3b205
 		summarizeBy: none
 		sourceColumn: amount
 
 	column response_code
 		dataType: string
+		lineageTag: 46bd8d92-f6d5-498e-a5e3-f2bb8fd6fa1d
 		summarizeBy: none
 		sourceColumn: response_code
 
 	column is_approved
 		dataType: boolean
+		lineageTag: c152d1d5-9702-4bee-8c96-36b5aa929aa6
 		summarizeBy: none
 		sourceColumn: is_approved
 
 	column is_late
 		dataType: boolean
+		lineageTag: 25ae98e8-c02f-421f-8c4e-72d950106ac7
 		summarizeBy: none
 		sourceColumn: is_late
 

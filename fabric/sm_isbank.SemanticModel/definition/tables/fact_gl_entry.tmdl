@@ -1,60 +1,73 @@
 table fact_gl_entry
+	lineageTag: f4af2b49-cd49-4d9c-86af-fb2ae4b419fe
 
 	measure Income = CALCULATE ( SUM ( fact_gl_entry[amount] ), fact_gl_entry[line_type] = "INCOME" )
 		formatString: #,0.00
 		displayFolder: Profitability
+		lineageTag: bd111019-f0d1-49e0-8019-b041ef5919f9
 
 	measure Expense = -CALCULATE ( SUM ( fact_gl_entry[amount] ), fact_gl_entry[line_type] = "EXPENSE" )
 		formatString: #,0.00
 		displayFolder: Profitability
+		lineageTag: 9651eeeb-02fe-4f7f-b54a-9043a3ef5b87
 
 	measure 'Net Profit' = [Income] - [Expense]
 		formatString: #,0.00
 		displayFolder: Profitability
+		lineageTag: 5cdb93c8-b70a-400f-ab46-2ff9f5a3eb78
 
 	measure 'Cost-to-Income Ratio' = DIVIDE ( [Expense], [Income] )
 		formatString: 0.0%
 		displayFolder: Profitability
+		lineageTag: 5dc82448-c567-486f-b76c-f19c190f64e7
 
 	measure 'Profit Margin' = DIVIDE ( [Net Profit], [Income] )
 		formatString: 0.0%
 		displayFolder: Profitability
+		lineageTag: a8064b1d-4f8d-47e3-a09f-869f58ed8f6b
 
 	column month_key
 		dataType: int64
 		isHidden
+		lineageTag: e38748d8-6370-4c5a-86ef-5e00b9eefaf7
 		summarizeBy: none
 		sourceColumn: month_key
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: 425b8f47-1c2a-431d-bd70-3b4719fc78d8
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column cost_centre
 		dataType: string
+		lineageTag: 9027f03d-0732-43cc-a059-c75393c49c09
 		summarizeBy: none
 		sourceColumn: cost_centre
 
 	column gl_account
 		dataType: string
+		lineageTag: 8c225a0f-bbfd-41de-90d1-de01b0bdefc8
 		summarizeBy: none
 		sourceColumn: gl_account
 
 	column gl_description
 		dataType: string
+		lineageTag: 2657453c-4a31-4d35-abe1-ab1b78cbdf95
 		summarizeBy: none
 		sourceColumn: gl_description
 
 	column line_type
 		dataType: string
+		lineageTag: 78af6fa6-e92e-4963-9152-52f66a82e4a4
 		summarizeBy: none
 		sourceColumn: line_type
 
 	column amount
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 14d29e9a-7201-4930-ae95-98aff433a901
 		summarizeBy: none
 		sourceColumn: amount
 

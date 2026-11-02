@@ -1,22 +1,26 @@
 /// Row-level security mapping: which user may see which branch.
 table sec_user_branch
 	isHidden
+	lineageTag: e8c5780a-17e9-4fe1-99f0-b769b421fe79
 
 	column user_upn
 		dataType: string
 		isHidden
+		lineageTag: 3e0b7bf1-fe4c-4fa2-88d5-1152d88f6b56
 		summarizeBy: none
 		sourceColumn: user_upn
 
 	column branch_code
 		dataType: string
 		isHidden
+		lineageTag: 5c4a8751-929e-4965-99dd-2abc6f572696
 		summarizeBy: none
 		sourceColumn: branch_code
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: 0d35707b-0aa7-45fd-8551-139cba89d2ed
 		summarizeBy: none
 		sourceColumn: branch_key
 
