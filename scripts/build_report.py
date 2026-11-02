@@ -405,15 +405,6 @@ def chrome(page: Page) -> None:
     page.add("f_region", 12, 372, 186, 62, slicer("c:dim_branch.region", "Region", "region"))
     page.add("f_branch", 12, 442, 186, 62, slicer("c:dim_branch.branch_name", "Branch", "branch"))
     page.add("f_year", 12, 512, 186, 62, slicer("c:dim_date.year", "Year", "year"))
-    small = {"fontFamily": "Segoe UI", "fontSize": "8pt", "color": "#AEB9C9"}
-    page.add(
-        "footer",
-        10,
-        660,
-        190,
-        48,
-        textbox([("Synthetic data for a fictional bank.\nBuilt on Microsoft Fabric.", small)]),
-    )
     title = {"fontFamily": "Segoe UI Semibold", "fontSize": "18pt", "color": NAVY}
     sub = {"fontFamily": "Segoe UI", "fontSize": "9pt", "color": MUTED}
     page.add("title", X0 - 6, 6, 700, 40, textbox([(page.title, title)]))
