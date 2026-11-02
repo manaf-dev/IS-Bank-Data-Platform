@@ -479,12 +479,14 @@ def executive() -> Page:
         ROW1_Y,
         bw,
         ROW_H,
-        donut(
-            "Deposits by region",
+        # Ten regions with a long tail: a sorted bar reads far better than a donut.
+        bar(
+            "Deposits by region (GHS)",
             "c:dim_branch.region",
             "Region",
             "m:fact_account_balance_monthly.Deposits",
             "Deposits",
+            fill=GOLD,
         ),
     )
     (a, aw), (b, bw) = columns([1, 1])

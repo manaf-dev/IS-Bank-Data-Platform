@@ -1,16 +1,16 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "executive_region",
   "position": {
     "x": 921,
     "y": 180,
-    "z": 16000,
+    "z": 15000,
     "height": 258,
     "width": 343,
-    "tabOrder": 16000
+    "tabOrder": 15000
   },
   "visual": {
-    "visualType": "donutChart",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_branch.region",
               "nativeQueryRef": "region",
-              "active": true,
               "displayName": "Region"
             }
           ]
@@ -52,23 +51,38 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_account_balance_monthly"
+                  }
+                },
+                "Property": "Deposits"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {
-      "legend": [
+      "dataPoint": [
         {
           "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            },
-            "position": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Right'"
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#C9A227'"
+                    }
+                  }
                 }
               }
             }
@@ -85,10 +99,14 @@
                 }
               }
             },
-            "labelStyle": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Percent of total'"
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1B2A41'"
+                    }
+                  }
                 }
               }
             },
@@ -96,6 +114,19 @@
               "expr": {
                 "Literal": {
                   "Value": "8D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "valueAxis": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }
@@ -117,7 +148,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Deposits by region'"
+                  "Value": "'Deposits by region (GHS)'"
                 }
               }
             }
