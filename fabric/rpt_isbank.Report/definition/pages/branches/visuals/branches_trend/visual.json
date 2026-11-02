@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "branches_trend",
   "position": {
     "x": 853,
     "y": 180,
-    "z": 15000,
+    "z": 17000,
     "height": 258,
     "width": 411,
-    "tabOrder": 15000
+    "tabOrder": 17000
   },
   "visual": {
     "visualType": "lineChart",
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_date.year",
               "nativeQueryRef": "year",
-              "active": true,
               "displayName": "Year"
             },
             {
@@ -44,7 +43,6 @@
               },
               "queryRef": "dim_date.month_name",
               "nativeQueryRef": "month_name",
-              "active": false,
               "displayName": "Month"
             }
           ]
@@ -97,7 +95,8 @@
             },
             "direction": "Ascending"
           }
-        ]
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {

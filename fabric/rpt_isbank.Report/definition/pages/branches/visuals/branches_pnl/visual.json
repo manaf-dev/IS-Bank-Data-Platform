@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "branches_pnl",
   "position": {
     "x": 226,
     "y": 180,
-    "z": 14000,
+    "z": 16000,
     "height": 528,
     "width": 617,
-    "tabOrder": 14000
+    "tabOrder": 16000
   },
   "visual": {
     "visualType": "pivotTable",
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_branch.branch_name",
               "nativeQueryRef": "branch_name",
-              "active": true,
               "displayName": "Branch"
             }
           ]
@@ -128,7 +127,8 @@
             },
             "direction": "Descending"
           }
-        ]
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {

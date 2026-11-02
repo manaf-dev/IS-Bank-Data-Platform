@@ -3,9 +3,9 @@
   "name": "customers_nav",
   "position": {
     "x": 12,
-    "y": 92,
+    "y": 88,
     "z": 2000,
-    "height": 250,
+    "height": 200,
     "width": 186,
     "tabOrder": 2000
   },

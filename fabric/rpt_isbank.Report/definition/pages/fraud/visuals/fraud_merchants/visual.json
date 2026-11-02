@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "fraud_merchants",
   "position": {
     "x": 844,
     "y": 450,
-    "z": 18000,
+    "z": 20000,
     "height": 258,
     "width": 419,
-    "tabOrder": 18000
+    "tabOrder": 20000
   },
   "visual": {
     "visualType": "tableEx",
@@ -93,7 +93,8 @@
             },
             "direction": "Descending"
           }
-        ]
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {

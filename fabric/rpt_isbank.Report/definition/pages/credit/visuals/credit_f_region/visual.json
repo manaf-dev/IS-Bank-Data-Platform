@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "credit_f_region",
   "position": {
     "x": 12,
-    "y": 372,
-    "z": 3000,
-    "height": 62,
+    "y": 548,
+    "z": 7000,
+    "height": 54,
     "width": 186,
-    "tabOrder": 3000
+    "tabOrder": 7000
   },
   "visual": {
     "visualType": "slicer",
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_branch.region",
               "nativeQueryRef": "region",
-              "active": true,
               "displayName": "Region"
             }
           ]

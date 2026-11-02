@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "credit_status",
   "position": {
     "x": 226,
     "y": 180,
-    "z": 15000,
+    "z": 17000,
     "height": 258,
     "width": 339,
-    "tabOrder": 15000
+    "tabOrder": 17000
   },
   "visual": {
     "visualType": "donutChart",
@@ -28,7 +28,6 @@
               },
               "queryRef": "fact_loan.loan_status",
               "nativeQueryRef": "loan_status",
-              "active": true,
               "displayName": "Status"
             }
           ]

@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "customers_risk",
   "position": {
     "x": 226,
     "y": 180,
-    "z": 15000,
+    "z": 17000,
     "height": 258,
     "width": 514,
-    "tabOrder": 15000
+    "tabOrder": 17000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_branch.branch_name",
               "nativeQueryRef": "branch_name",
-              "active": true,
               "displayName": "Branch"
             }
           ]
@@ -68,7 +67,8 @@
             },
             "direction": "Descending"
           }
-        ]
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {

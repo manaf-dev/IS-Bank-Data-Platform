@@ -301,13 +301,13 @@ def shape(fill: str) -> dict:
     }
 
 
-def slicer(ref: str, label: str, group: str) -> dict:
-    """A dropdown slicer synced across pages through its group name."""
+def slicer(ref: str, label: str, group: str, mode: str = "Dropdown") -> dict:
+    """A slicer synced across pages through its group name; mode Between gives a date range."""
     return {
         "visualType": "slicer",
         "query": {"queryState": roles(Values=[(ref, label)])},
         "objects": {
-            "data": props(mode="Dropdown"),
+            "data": props(mode=mode),
             "header": props(show=True, fontColor=color(NAVY), textSize=9),
             "items": props(fontColor=color(INK), textSize=9),
         },
@@ -401,10 +401,20 @@ def chrome(page: Page) -> None:
         70,
         textbox([("IS Bank", white), ("\nData & Analytics Platform", gold)]),
     )
-    page.add("nav", 12, 92, 186, 250, navigator())
-    page.add("f_region", 12, 372, 186, 62, slicer("c:dim_branch.region", "Region", "region"))
-    page.add("f_branch", 12, 442, 186, 62, slicer("c:dim_branch.branch_name", "Branch", "branch"))
-    page.add("f_year", 12, 512, 186, 62, slicer("c:dim_date.year", "Year", "year"))
+    page.add("nav", 12, 88, 186, 200, navigator())
+    # Period filters first, then organisation filters; each synced across pages.
+    filters = [
+        ("f_date", "c:dim_date.date", "Date range", "date", "Between", 72),
+        ("f_year", "c:dim_date.year", "Year", "year", "Dropdown", 54),
+        ("f_quarter", "c:dim_date.quarter_name", "Quarter", "quarter", "Dropdown", 54),
+        ("f_week", "c:dim_date.week_label", "Week", "week", "Dropdown", 54),
+        ("f_region", "c:dim_branch.region", "Region", "region", "Dropdown", 54),
+        ("f_branch", "c:dim_branch.branch_name", "Branch", "branch", "Dropdown", 54),
+    ]
+    y = 298
+    for name, ref, label, group, mode, height in filters:
+        page.add(name, 12, y, 186, height, slicer(ref, label, group, mode))
+        y += height + 4
     title = {"fontFamily": "Segoe UI Semibold", "fontSize": "18pt", "color": NAVY}
     sub = {"fontFamily": "Segoe UI", "fontSize": "9pt", "color": MUTED}
     page.add("title", X0 - 6, 6, 700, 40, textbox([(page.title, title)]))

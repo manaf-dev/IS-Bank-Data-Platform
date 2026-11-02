@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "credit_employer",
   "position": {
     "x": 575,
     "y": 180,
-    "z": 16000,
+    "z": 18000,
     "height": 258,
     "width": 339,
-    "tabOrder": 16000
+    "tabOrder": 18000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -28,7 +28,6 @@
               },
               "queryRef": "fact_loan.employer_type",
               "nativeQueryRef": "employer_type",
-              "active": true,
               "displayName": "Employment"
             }
           ]
@@ -68,7 +67,8 @@
             },
             "direction": "Descending"
           }
-        ]
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {

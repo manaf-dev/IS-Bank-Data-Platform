@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "branch_detail_channel",
   "position": {
     "x": 575,
     "y": 450,
-    "z": 20000,
+    "z": 22000,
     "height": 258,
     "width": 339,
-    "tabOrder": 20000
+    "tabOrder": 22000
   },
   "visual": {
     "visualType": "clusteredBarChart",
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_channel.channel",
               "nativeQueryRef": "channel",
-              "active": true,
               "displayName": "Channel"
             }
           ]
@@ -68,7 +67,8 @@
             },
             "direction": "Descending"
           }
-        ]
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {

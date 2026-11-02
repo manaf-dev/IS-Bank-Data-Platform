@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "customers_digital",
   "position": {
     "x": 750,
     "y": 180,
-    "z": 16000,
+    "z": 18000,
     "height": 258,
     "width": 514,
-    "tabOrder": 16000
+    "tabOrder": 18000
   },
   "visual": {
     "visualType": "lineChart",
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_date.year",
               "nativeQueryRef": "year",
-              "active": true,
               "displayName": "Year"
             },
             {
@@ -44,7 +43,6 @@
               },
               "queryRef": "dim_date.month_name",
               "nativeQueryRef": "month_name",
-              "active": false,
               "displayName": "Month"
             }
           ]
@@ -97,7 +95,8 @@
             },
             "direction": "Ascending"
           }
-        ]
+        ],
+        "isDefaultSort": false
       }
     },
     "objects": {

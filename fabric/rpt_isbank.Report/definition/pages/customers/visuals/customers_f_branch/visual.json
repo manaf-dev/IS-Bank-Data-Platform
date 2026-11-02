@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "customers_f_branch",
   "position": {
     "x": 12,
-    "y": 442,
-    "z": 4000,
-    "height": 62,
+    "y": 606,
+    "z": 8000,
+    "height": 54,
     "width": 186,
-    "tabOrder": 4000
+    "tabOrder": 8000
   },
   "visual": {
     "visualType": "slicer",
@@ -28,7 +28,6 @@
               },
               "queryRef": "dim_branch.branch_name",
               "nativeQueryRef": "branch_name",
-              "active": true,
               "displayName": "Branch"
             }
           ]

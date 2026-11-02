@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "fraud_mode",
   "position": {
     "x": 226,
     "y": 450,
-    "z": 16000,
+    "z": 18000,
     "height": 258,
     "width": 299,
-    "tabOrder": 16000
+    "tabOrder": 18000
   },
   "visual": {
     "visualType": "donutChart",
@@ -28,7 +28,6 @@
               },
               "queryRef": "fact_card_transaction.entry_mode",
               "nativeQueryRef": "entry_mode",
-              "active": true,
               "displayName": "Entry mode"
             }
           ]
