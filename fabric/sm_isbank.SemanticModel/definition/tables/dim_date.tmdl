@@ -31,33 +31,6 @@ table dim_date
 		summarizeBy: none
 		sourceColumn: quarter
 
-	column quarter_name
-		dataType: string
-		lineageTag: c768f71a-9d66-4d37-8006-28d60ea99d6c
-		summarizeBy: none
-		sourceColumn: quarter_name
-		sortByColumn: quarter
-
-	column week_of_year
-		dataType: int64
-		formatString: 0
-		lineageTag: e2cf6827-f578-4a07-b1a0-7f836637fe69
-		summarizeBy: none
-		sourceColumn: week_of_year
-
-	column week_start
-		dataType: dateTime
-		formatString: yyyy-mm-dd
-		lineageTag: bbb36d68-fc02-4495-8b52-7dde4dc1d73b
-		summarizeBy: none
-		sourceColumn: week_start
-
-	column week_label
-		dataType: string
-		lineageTag: 4fd5c38e-4f3c-4540-970d-dd63859d57c8
-		summarizeBy: none
-		sourceColumn: week_label
-
 	column month
 		dataType: int64
 		formatString: 0
@@ -103,6 +76,33 @@ table dim_date
 		lineageTag: fec6254a-1cc1-46c5-95db-5701e24a984d
 		summarizeBy: none
 		sourceColumn: is_month_end
+
+	column quarter_name
+		dataType: string
+		lineageTag: c768f71a-9d66-4d37-8006-28d60ea99d6c
+		summarizeBy: none
+		sourceColumn: quarter_name
+		sortByColumn: quarter
+
+	column week_of_year
+		dataType: int64
+		formatString: 0
+		lineageTag: e2cf6827-f578-4a07-b1a0-7f836637fe69
+		summarizeBy: none
+		sourceColumn: week_of_year
+
+	column week_start
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: bbb36d68-fc02-4495-8b52-7dde4dc1d73b
+		summarizeBy: none
+		sourceColumn: week_start
+
+	column week_label
+		dataType: string
+		lineageTag: 4fd5c38e-4f3c-4540-970d-dd63859d57c8
+		summarizeBy: none
+		sourceColumn: week_label
 
 	partition dim_date = entity
 		mode: directLake
