@@ -1,5 +1,6 @@
 /// Month-end balance per account. Filtered by month through dim_date[month_key].
 table fact_account_balance_monthly
+	lineageTag: 57f61b64-5bb4-446a-9547-53594aa32229
 
 	measure 'Closing Balance' =
 			VAR LastMonth = MAX ( fact_account_balance_monthly[month_key] )
@@ -10,10 +11,12 @@ table fact_account_balance_monthly
 			    )
 		formatString: #,0.00
 		displayFolder: Balances
+		lineageTag: 06311253-f6ae-4cd5-973e-a2f530c5bf03
 
 	measure Deposits = CALCULATE ( [Closing Balance], dim_product[product_family] = "DEPOSIT" )
 		formatString: #,0.00
 		displayFolder: Balances
+		lineageTag: ab063a8e-c918-4fa0-b564-552f92f00c88
 
 	measure 'Deposits 3M Ago' =
 			VAR LastMonth = MAX ( fact_account_balance_monthly[month_key] )
@@ -27,44 +30,52 @@ table fact_account_balance_monthly
 			    )
 		formatString: #,0.00
 		displayFolder: Balances
+		lineageTag: 01c9d968-76b9-43bd-90c1-5e2ef1026ec8
 
 	measure 'Deposit Growth 3M' = DIVIDE ( [Deposits] - [Deposits 3M Ago], [Deposits 3M Ago] )
 		formatString: 0.0%
 		displayFolder: Balances
+		lineageTag: 241d6b7a-651e-4e1d-b7b5-e03e22b64993
 
 	column month_key
 		dataType: int64
 		isHidden
+		lineageTag: 188e4bf9-346b-4df2-9477-2b7c5ff3e0fb
 		summarizeBy: none
 		sourceColumn: month_key
 
 	column account_key
 		dataType: int64
 		isHidden
+		lineageTag: abb5dde6-ea20-4c27-bd6a-de9f9d501dc5
 		summarizeBy: none
 		sourceColumn: account_key
 
 	column customer_key
 		dataType: int64
 		isHidden
+		lineageTag: da63df1a-2ca2-4b60-94b1-079eccb013ba
 		summarizeBy: none
 		sourceColumn: customer_key
 
 	column product_key
 		dataType: int64
 		isHidden
+		lineageTag: da66efd3-cf95-4699-951b-21e0698544d5
 		summarizeBy: none
 		sourceColumn: product_key
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: 97ed6275-f719-46c1-bc1b-4fcfe33742d3
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column balance
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 86c433b1-ba5c-4ae4-9fb9-2b0fe8643cd0
 		summarizeBy: none
 		sourceColumn: balance
 

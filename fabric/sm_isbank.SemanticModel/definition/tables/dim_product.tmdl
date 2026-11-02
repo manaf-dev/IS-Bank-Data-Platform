@@ -1,23 +1,28 @@
 table dim_product
+	lineageTag: bc14b28a-6d53-4e7c-8e6b-b48bbcaa9736
 
 	column product_key
 		dataType: int64
 		isHidden
+		lineageTag: 58786e8e-992f-4ae4-9871-5e62f6d31287
 		summarizeBy: none
 		sourceColumn: product_key
 
 	column product_code
 		dataType: string
+		lineageTag: 96f66488-6fea-4a59-aa16-3417b17a4705
 		summarizeBy: none
 		sourceColumn: product_code
 
 	column product_name
 		dataType: string
+		lineageTag: 85ceb2b7-227d-4964-9378-02cde3467cb4
 		summarizeBy: none
 		sourceColumn: product_name
 
 	column product_family
 		dataType: string
+		lineageTag: f5823dcd-6415-4707-8fd6-b13e62d56b1a
 		summarizeBy: none
 		sourceColumn: product_family
 

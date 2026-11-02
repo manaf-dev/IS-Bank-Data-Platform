@@ -1,87 +1,103 @@
 table dim_account
+	lineageTag: 606fc2a0-c1dd-4211-b817-2e6fcc8338de
 
 	column account_key
 		dataType: int64
 		isHidden
+		lineageTag: 56ee2ae0-9953-4545-aadf-bf9339537e92
 		summarizeBy: none
 		sourceColumn: account_key
 
 	column account_number
 		dataType: string
+		lineageTag: f569f9cc-54d2-491b-b279-2474dc35114a
 		summarizeBy: none
 		sourceColumn: account_number
 
 	column account_number_masked
 		dataType: string
+		lineageTag: 696ce633-3788-410a-9f99-40d09f68625d
 		summarizeBy: none
 		sourceColumn: account_number_masked
 
 	column customer_key
 		dataType: int64
 		isHidden
+		lineageTag: c61820da-3fcd-4ebf-b57e-6028662fca13
 		summarizeBy: none
 		sourceColumn: customer_key
 
 	column product_key
 		dataType: int64
 		isHidden
+		lineageTag: edc5d5ee-65a0-4015-b944-74566016bb0d
 		summarizeBy: none
 		sourceColumn: product_key
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: 8de7c025-37bd-4063-a5dd-41de457ca49d
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column product_code
 		dataType: string
+		lineageTag: 1aaca698-6a67-46bc-bc3b-f9636e035469
 		summarizeBy: none
 		sourceColumn: product_code
 
 	column branch_code
 		dataType: string
+		lineageTag: bf0bfba1-5c6c-4910-b6c5-13343e8529be
 		summarizeBy: none
 		sourceColumn: branch_code
 
 	column status
 		dataType: string
+		lineageTag: 51838c27-f19f-45d6-8752-4d258206bd45
 		summarizeBy: none
 		sourceColumn: status
 
 	column opened_date
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: 74579b17-eca2-4606-ad6b-24bef598393c
 		summarizeBy: none
 		sourceColumn: opened_date
 
 	column closed_date
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: a73ca417-4dda-4e1d-9a7b-5ea7d022c68f
 		summarizeBy: none
 		sourceColumn: closed_date
 
 	column contract_amount
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 54ce373d-d2ef-4cd7-9f0d-ead8c948c84a
 		summarizeBy: none
 		sourceColumn: contract_amount
 
 	column interest_rate_pct
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 9eb7bb5d-0a89-4330-90f4-fe11491bdfe5
 		summarizeBy: none
 		sourceColumn: interest_rate_pct
 
 	column term_months
 		dataType: int64
 		formatString: 0
+		lineageTag: 673cf13b-e9f5-4f42-88d2-87924c59421f
 		summarizeBy: none
 		sourceColumn: term_months
 
 	column maturity_date
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: daee5ecd-d242-4fad-9c64-48dc9810778c
 		summarizeBy: none
 		sourceColumn: maturity_date
 

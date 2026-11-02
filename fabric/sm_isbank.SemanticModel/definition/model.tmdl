@@ -4,6 +4,8 @@ model Model
 	discourageImplicitMeasures
 	sourceQueryCulture: en-US
 
+annotation PBI_ProTooling = ["DevMode","RemoteModeling"]
+
 ref table dim_account
 ref table dim_branch
 ref table dim_channel

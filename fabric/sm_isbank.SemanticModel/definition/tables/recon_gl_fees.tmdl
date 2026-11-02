@@ -1,59 +1,71 @@
 /// GL fee income vs core-ledger fee postings per branch and month.
 table recon_gl_fees
+	lineageTag: b05dc7d6-fca4-440a-808b-ba161fdae4dd
 
 	measure 'GL Fee Income' = SUM ( recon_gl_fees[gl_fee_income] )
 		formatString: #,0.00
 		displayFolder: Reconciliation
+		lineageTag: 3de154e1-afe9-4a76-a82d-e69558da1245
 
 	measure 'Core Fee Income' = SUM ( recon_gl_fees[core_fee_income] )
 		formatString: #,0.00
 		displayFolder: Reconciliation
+		lineageTag: ac075dfb-1b98-4079-96d4-2e84feaacc4d
 
 	measure 'Reconciliation Difference' = SUM ( recon_gl_fees[difference] )
 		formatString: #,0.00
 		displayFolder: Reconciliation
+		lineageTag: 3576e65b-69ee-416b-8dbb-059172effc41
 
 	measure 'Reconciliation Breaks' = CALCULATE ( COUNTROWS ( recon_gl_fees ), recon_gl_fees[is_break] = TRUE () )
 		formatString: #,0
 		displayFolder: Reconciliation
+		lineageTag: bdc46b7a-c3b8-4eec-ae7d-607d0f706b4d
 
 	column month_key
 		dataType: int64
 		isHidden
+		lineageTag: e06a9a1f-b3cb-4e66-8cb9-4f02fefe86b6
 		summarizeBy: none
 		sourceColumn: month_key
 
 	column branch_code
 		dataType: string
+		lineageTag: 5f6d49c5-404b-4f03-9ff4-44b02cf4c17c
 		summarizeBy: none
 		sourceColumn: branch_code
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: 38e4f709-e49f-4062-8416-c95507b52847
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column gl_fee_income
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: f0cbc6b9-061e-4533-a0ab-5348f0927193
 		summarizeBy: none
 		sourceColumn: gl_fee_income
 
 	column core_fee_income
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: b05e2b02-7a8a-4d5d-8832-b1ee7a5af9ac
 		summarizeBy: none
 		sourceColumn: core_fee_income
 
 	column difference
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 377e6783-4f00-467f-8760-8d841d0c6a7b
 		summarizeBy: none
 		sourceColumn: difference
 
 	column is_break
 		dataType: boolean
+		lineageTag: 7f6cf72c-5151-4098-b82a-f91275c6adb0
 		summarizeBy: none
 		sourceColumn: is_break
 

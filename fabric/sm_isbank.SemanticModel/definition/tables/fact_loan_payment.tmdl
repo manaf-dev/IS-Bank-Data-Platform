@@ -1,71 +1,85 @@
 table fact_loan_payment
+	lineageTag: 7d33ff98-a314-41f1-ac10-b95baebe610f
 
 	measure 'Instalments Due' = COUNTROWS ( fact_loan_payment )
 		formatString: #,0
 		displayFolder: Collections
+		lineageTag: 85443747-61b3-4cec-a5b0-48aa5bc5ff7e
 
 	measure 'Missed Instalments' = CALCULATE ( COUNTROWS ( fact_loan_payment ), fact_loan_payment[is_missed] = TRUE () )
 		formatString: #,0
 		displayFolder: Collections
+		lineageTag: 1a9bee19-831d-496d-a4a7-13cbf6f98bab
 
 	measure 'Missed Instalment Rate' = DIVIDE ( [Missed Instalments], [Instalments Due] )
 		formatString: 0.0%
 		displayFolder: Collections
+		lineageTag: 1186be04-5428-4caa-87f7-8d7545d16010
 
 	measure 'Collection Rate' = DIVIDE ( SUM ( fact_loan_payment[amount_paid] ), SUM ( fact_loan_payment[amount_due] ) )
 		formatString: 0.0%
 		displayFolder: Collections
+		lineageTag: 6c36cde9-a708-4c2d-bbbb-ab1510bad800
 
 	column account_key
 		dataType: int64
 		isHidden
+		lineageTag: f9d0568e-7602-4c9b-90aa-26185de0f746
 		summarizeBy: none
 		sourceColumn: account_key
 
 	column installment_no
 		dataType: int64
 		formatString: 0
+		lineageTag: 144204f8-195b-4b76-8c89-a580d2c23164
 		summarizeBy: none
 		sourceColumn: installment_no
 
 	column due_date_key
 		dataType: int64
 		isHidden
+		lineageTag: 85ff6a85-d1c6-4efc-ad7c-758932d55cc5
 		summarizeBy: none
 		sourceColumn: due_date_key
 
 	column amount_due
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 51c35a91-66c7-4c28-a64f-691c09dc5fd7
 		summarizeBy: none
 		sourceColumn: amount_due
 
 	column amount_paid
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: d81d921c-8556-4370-a8db-fb6ec8daa6b4
 		summarizeBy: none
 		sourceColumn: amount_paid
 
 	column is_missed
 		dataType: boolean
+		lineageTag: 2e7a6870-9f95-423b-81eb-c9a0a224c03c
 		summarizeBy: none
 		sourceColumn: is_missed
 
 	column customer_key
 		dataType: int64
 		isHidden
+		lineageTag: ae8895af-2a95-4089-91c3-02503f8e4492
 		summarizeBy: none
 		sourceColumn: customer_key
 
 	column product_key
 		dataType: int64
 		isHidden
+		lineageTag: edc5d7f5-699d-4c83-8f8d-93e53bd89eaf
 		summarizeBy: none
 		sourceColumn: product_key
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: 3063d151-0e4b-4df0-a3e6-ce08d10abe1d
 		summarizeBy: none
 		sourceColumn: branch_key
 

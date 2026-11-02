@@ -1,20 +1,25 @@
 table fact_transaction
+	lineageTag: d17244a1-37c0-4648-bc5a-f8a367b9e803
 
 	measure Transactions = COUNTROWS ( fact_transaction )
 		formatString: #,0
 		displayFolder: Activity
+		lineageTag: 3e99de95-fb78-42a9-a929-45c570098c30
 
 	measure 'Transaction Value' = SUM ( fact_transaction[amount] )
 		formatString: #,0.00
 		displayFolder: Activity
+		lineageTag: 09d78ece-2d54-4c38-b50b-739e4ea9717b
 
 	measure 'Net Flow' = SUM ( fact_transaction[signed_amount] )
 		formatString: #,0.00
 		displayFolder: Activity
+		lineageTag: d0abdf55-74b6-4bb7-b8c1-add11fbf0913
 
 	measure 'Active Customers' = CALCULATE ( DISTINCTCOUNT ( fact_transaction[customer_key] ), fact_transaction[customer_key] <> -1 )
 		formatString: #,0
 		displayFolder: Activity
+		lineageTag: aa5ae072-18e3-4fd3-bf82-5a35343ebe4a
 
 	measure 'Customers at Risk' =
 			-- Customers whose activity in the last 3 months fell below half of the 3 months before.
@@ -38,6 +43,7 @@ table fact_transaction
 			    )
 		formatString: #,0
 		displayFolder: Churn
+		lineageTag: 78ad7396-a4ce-4e27-87e2-7f4c0df6b861
 
 	measure 'Customers Active in Prior Quarter' =
 			VAR EndDate = CALCULATE ( MAX ( dim_date[date] ), fact_transaction )
@@ -48,77 +54,91 @@ table fact_transaction
 			    )
 		formatString: #,0
 		displayFolder: Churn
+		lineageTag: b815b1b4-4d72-4451-8f5a-3eb59d40334b
 
 	measure 'At-risk Rate' = DIVIDE ( [Customers at Risk], [Customers Active in Prior Quarter] )
 		formatString: 0.0%
 		displayFolder: Churn
+		lineageTag: ded0b075-0e2d-45ab-8de1-0bdc9ffb843e
 
 	column txn_ref
 		dataType: string
 		isHidden
+		lineageTag: 00f21090-c0ae-4665-b04c-ad5797802bb5
 		summarizeBy: none
 		sourceColumn: txn_ref
 
 	column date_key
 		dataType: int64
 		isHidden
+		lineageTag: 044ab418-4f33-48d2-852c-0831c5b3251d
 		summarizeBy: none
 		sourceColumn: date_key
 
 	column account_key
 		dataType: int64
 		isHidden
+		lineageTag: 80d87932-a2a1-4f2d-9939-d2642c9672fe
 		summarizeBy: none
 		sourceColumn: account_key
 
 	column customer_key
 		dataType: int64
 		isHidden
+		lineageTag: ae988b03-f2b9-446f-a8b3-def60fb4ac0d
 		summarizeBy: none
 		sourceColumn: customer_key
 
 	column product_key
 		dataType: int64
 		isHidden
+		lineageTag: fbee694e-cd98-454a-b246-dd06a2b3a33e
 		summarizeBy: none
 		sourceColumn: product_key
 
 	column branch_key
 		dataType: int64
 		isHidden
+		lineageTag: d6857c1f-59a4-45f0-990e-1cac1eaa20e7
 		summarizeBy: none
 		sourceColumn: branch_key
 
 	column channel_key
 		dataType: int64
 		isHidden
+		lineageTag: 39e43158-ac2e-48d8-82e8-9658c9c47954
 		summarizeBy: none
 		sourceColumn: channel_key
 
 	column txn_code
 		dataType: string
+		lineageTag: 24170d2b-f1bf-44ae-b3b3-6144f8bf25cf
 		summarizeBy: none
 		sourceColumn: txn_code
 
 	column dr_cr
 		dataType: string
+		lineageTag: ff98c341-b609-4ccc-a6ab-13ebf184a487
 		summarizeBy: none
 		sourceColumn: dr_cr
 
 	column booking_ts
 		dataType: dateTime
+		lineageTag: 3e4fe2bd-1f27-47be-a798-084982bf3467
 		summarizeBy: none
 		sourceColumn: booking_ts
 
 	column amount
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: 8643f238-179d-479f-a08c-02bf8106f5fd
 		summarizeBy: none
 		sourceColumn: amount
 
 	column signed_amount
 		dataType: decimal
 		formatString: #,0.00
+		lineageTag: ab40fc91-6e55-4905-9b65-8c47807d6491
 		summarizeBy: none
 		sourceColumn: signed_amount
 

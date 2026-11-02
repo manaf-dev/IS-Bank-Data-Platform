@@ -1,13 +1,16 @@
 table dim_channel
+	lineageTag: d61f2b74-0bbf-465d-ac6c-3c5b8dae48f3
 
 	column channel_key
 		dataType: int64
 		isHidden
+		lineageTag: 7642b7ee-46e2-4423-a153-3d16a2ca9ee3
 		summarizeBy: none
 		sourceColumn: channel_key
 
 	column channel
 		dataType: string
+		lineageTag: 004961c5-aeca-4523-9b60-704a529b0a80
 		summarizeBy: none
 		sourceColumn: channel
 

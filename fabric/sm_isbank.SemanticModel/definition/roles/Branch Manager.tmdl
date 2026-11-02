@@ -9,3 +9,5 @@ role 'Branch Manager'
 
 	tablePermission sec_user_branch = [user_upn] = LOWER ( USERPRINCIPALNAME () )
 
+	annotation PBI_Id = 7bc81c28e6e6423fae0ee499bee68b45
+
