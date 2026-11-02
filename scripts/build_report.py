@@ -996,19 +996,24 @@ def main() -> None:
     )
 
     write_json(REPORT / "StaticResources" / "RegisteredResources" / THEME_NAME, THEME)
+    # report.json is owned by Desktop (it upgrades the schema), so only patch the theme in.
     report = json.loads((DEFINITION / "report.json").read_text(encoding="utf-8"))
-    report["themeCollection"]["customTheme"] = {
+    themes = report["themeCollection"]
+    themes["customTheme"] = {
         "name": THEME_NAME,
-        "reportVersionAtImport": "5.55",
+        # Same shape as the base theme's: a string in older schemas, an object since 3.x.
+        "reportVersionAtImport": themes["baseTheme"]["reportVersionAtImport"],
         "type": "RegisteredResources",
     }
-    report["resourcePackages"] = [
+    packages = [p for p in report.get("resourcePackages", []) if p["name"] != "RegisteredResources"]
+    packages.append(
         {
             "name": "RegisteredResources",
             "type": "RegisteredResources",
             "items": [{"name": THEME_NAME, "path": THEME_NAME, "type": "CustomTheme"}],
         }
-    ]
+    )
+    report["resourcePackages"] = packages
     write_json(DEFINITION / "report.json", report)
     print(f"{len(pages)} pages, {sum(len(p.visuals) for p in pages)} visuals -> {REPORT}")
 
