@@ -155,6 +155,22 @@ def test_dates_cover_the_history(gold):
     assert pd.Timestamp(dates.max()) >= pd.Timestamp("2026-12-31")
 
 
+@pytest.mark.parametrize(
+    ("day", "label", "week_start", "quarter"),
+    [
+        ("2025-12-29", "2026-W01", "2025-12-29", "Q4"),  # ISO week belongs to next year
+        ("2021-01-01", "2020-W53", "2020-12-28", "Q1"),  # and to the previous year
+        ("2025-06-15", "2025-W24", "2025-06-09", "Q2"),  # Sunday ends the week
+    ],
+)
+def test_dates_carry_iso_weeks_and_quarter_names(gold, day, label, week_start, quarter):
+    dates = gold["dim_date"].assign(date=lambda d: pd.to_datetime(d["date"]))
+    row = dates[dates["date"] == pd.Timestamp(day)].iloc[0]
+    assert row["week_label"] == label
+    assert pd.Timestamp(row["week_start"]) == pd.Timestamp(week_start)
+    assert row["quarter_name"] == quarter
+
+
 def test_every_branch_has_a_manager_and_grants_are_added(spark, gold):
     access = gold["sec_user_branch"]
     branches = set(gold["dim_branch"]["branch_code"])

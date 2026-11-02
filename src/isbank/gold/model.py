@@ -42,15 +42,26 @@ def month_key(col) -> F.Column:
 
 
 def dim_date(spark, start: dt.date, end: dt.date) -> DataFrame:
-    """One row per calendar day, with month-end and salary-season flags for the reports."""
+    """One row per calendar day, with month-end and salary-season flags for the reports.
+
+    Weeks follow ISO 8601 (Monday start); a week belongs to the year of its Thursday, so
+    29 Dec 2025 is in 2026-W01. Report slicers use week_label, which sorts as text.
+    """
     days = spark.sql(
         f"select explode(sequence(to_date('{start}'), to_date('{end}'), interval 1 day)) as d"
     )
+    week_start = F.to_date(F.date_trunc("week", "d"))
+    iso_year = F.year(F.date_add(week_start, 3))
+    week = F.weekofyear("d")
     return days.select(
         date_key(F.col("d")).alias("date_key"),
         F.col("d").alias("date"),
         F.year("d").alias("year"),
         F.quarter("d").alias("quarter"),
+        F.concat(F.lit("Q"), F.quarter("d")).alias("quarter_name"),
+        week.alias("week_of_year"),
+        week_start.alias("week_start"),
+        F.concat(iso_year, F.lit("-W"), F.lpad(week.cast("string"), 2, "0")).alias("week_label"),
         F.month("d").alias("month"),
         F.date_format("d", "MMMM").alias("month_name"),
         month_key(F.col("d")).alias("month_key"),
