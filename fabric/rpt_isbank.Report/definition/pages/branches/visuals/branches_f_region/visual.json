@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "branches_f_region",
   "position": {
     "x": 12,
@@ -28,6 +28,7 @@
               },
               "queryRef": "dim_branch.region",
               "nativeQueryRef": "region",
+              "active": true,
               "displayName": "Region"
             }
           ]

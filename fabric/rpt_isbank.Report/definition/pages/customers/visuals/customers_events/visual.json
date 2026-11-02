@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "customers_events",
   "position": {
     "x": 226,
@@ -28,6 +28,7 @@
               },
               "queryRef": "fact_digital_event.event_type",
               "nativeQueryRef": "event_type",
+              "active": true,
               "displayName": "Event"
             }
           ]
@@ -67,8 +68,7 @@
             },
             "direction": "Descending"
           }
-        ],
-        "isDefaultSort": false
+        ]
       }
     },
     "objects": {

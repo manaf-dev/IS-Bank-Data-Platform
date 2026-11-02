@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "credit_product",
   "position": {
     "x": 924,
@@ -28,6 +28,7 @@
               },
               "queryRef": "dim_product.product_name",
               "nativeQueryRef": "product_name",
+              "active": true,
               "displayName": "Product"
             }
           ]
@@ -67,8 +68,7 @@
             },
             "direction": "Descending"
           }
-        ],
-        "isDefaultSort": false
+        ]
       }
     },
     "objects": {

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "fraud_mode",
   "position": {
     "x": 226,
@@ -28,6 +28,7 @@
               },
               "queryRef": "fact_card_transaction.entry_mode",
               "nativeQueryRef": "entry_mode",
+              "active": true,
               "displayName": "Entry mode"
             }
           ]

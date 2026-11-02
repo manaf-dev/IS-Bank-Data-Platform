@@ -27,7 +27,6 @@
   "pageBinding": {
     "name": "branch_drillthrough",
     "type": "Drillthrough",
-    "referenceScope": "Default",
     "parameters": [
       {
         "name": "branch_param",
