@@ -401,17 +401,17 @@ def chrome(page: Page) -> None:
         70,
         textbox([("IS Bank", white), ("\nData & Analytics Platform", gold)]),
     )
-    page.add("nav", 12, 88, 186, 200, navigator())
+    page.add("nav", 12, 88, 186, 180, navigator())
     # Period filters first, then organisation filters; each synced across pages.
     filters = [
-        ("f_date", "c:dim_date.date", "Date range", "date", "Between", 72),
-        ("f_year", "c:dim_date.year", "Year", "year", "Dropdown", 54),
-        ("f_quarter", "c:dim_date.quarter_name", "Quarter", "quarter", "Dropdown", 54),
-        ("f_week", "c:dim_date.week_label", "Week", "week", "Dropdown", 54),
-        ("f_region", "c:dim_branch.region", "Region", "region", "Dropdown", 54),
-        ("f_branch", "c:dim_branch.branch_name", "Branch", "branch", "Dropdown", 54),
+        ("f_date", "c:dim_date.date", "Date range", "date", "Between", 104),
+        ("f_year", "c:dim_date.year", "Year", "year", "Dropdown", 60),
+        ("f_quarter", "c:dim_date.quarter_name", "Quarter", "quarter", "Dropdown", 60),
+        ("f_week", "c:dim_date.week_label", "Week", "week", "Dropdown", 60),
+        ("f_region", "c:dim_branch.region", "Region", "region", "Dropdown", 60),
+        ("f_branch", "c:dim_branch.branch_name", "Branch", "branch", "Dropdown", 60),
     ]
-    y = 298
+    y = 278  # ends at 702: date range (two inputs) 104, dropdowns 60, gaps 4
     for name, ref, label, group, mode, height in filters:
         page.add(name, 12, y, 186, height, slicer(ref, label, group, mode))
         y += height + 4
