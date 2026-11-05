@@ -19,6 +19,7 @@ SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/defini
 NAVY = "#0B1F3A"
 NAVY_2 = "#16325C"
 GOLD = "#C9A227"
+GOLD_SOFT = "#EBD891"  # hover tint; navy text on it passes WCAG AA
 INK = "#1B2A41"
 MUTED = "#5B6B82"
 CANVAS = "#F3F4F7"
@@ -30,6 +31,7 @@ SIDEBAR_W = 210
 X0, X1 = 226, 1264
 KPI_Y, KPI_H = 76, 92
 ROW1_Y, ROW2_Y, ROW_H = 180, 450, 258
+DATE_X = 924  # left edge of the header date-range slicer
 
 THEME = {
     "name": "IS Bank",
@@ -322,16 +324,19 @@ def slicer(ref: str, label: str, group: str, mode: str = "Dropdown") -> dict:
 
 def navigator() -> dict:
     """A vertical page navigator in the sidebar, gold for the current page."""
-    states = lambda prop, default, selected: [  # noqa: E731
+    # Explicit hover and press states: Power BI's defaults put white text on light grey.
+    states = lambda prop, default, hover, selected: [  # noqa: E731
         {"properties": {prop: color(default)}, "selector": {"id": "default"}},
+        {"properties": {prop: color(hover)}, "selector": {"id": "hover"}},
+        {"properties": {prop: color(hover)}, "selector": {"id": "press"}},
         {"properties": {prop: color(selected)}, "selector": {"id": "selected"}},
     ]
     return {
         "visualType": "pageNavigator",
         "objects": {
             "layout": props(orientation=1),
-            "fill": states("fillColor", NAVY_2, GOLD),
-            "text": states("fontColor", "#FFFFFF", NAVY),
+            "fill": states("fillColor", NAVY_2, GOLD_SOFT, GOLD),
+            "text": states("fontColor", "#FFFFFF", NAVY, NAVY),
             "outline": props(show=False),
             "shape": props(tileShape="roundedRectangle"),
         },
@@ -388,7 +393,7 @@ def back_button() -> dict:
     }
 
 
-def chrome(page: Page) -> None:
+def chrome(page: Page, title_w: int = DATE_X - X0 - 4) -> None:
     """Sidebar (wordmark, navigation, synced slicers) and the page header."""
     white = {"fontFamily": "Segoe UI Semibold", "fontSize": "20pt", "color": "#FFFFFF"}
     gold = {"fontFamily": "Segoe UI", "fontSize": "9pt", "color": GOLD}
@@ -401,24 +406,32 @@ def chrome(page: Page) -> None:
         70,
         textbox([("IS Bank", white), ("\nData & Analytics Platform", gold)]),
     )
-    page.add("nav", 12, 88, 186, 180, navigator())
+    page.add("nav", 12, 88, 186, 200, navigator())
     # Period filters first, then organisation filters; each synced across pages.
     filters = [
-        ("f_date", "c:dim_date.date", "Date range", "date", "Between", 104),
         ("f_year", "c:dim_date.year", "Year", "year", "Dropdown", 60),
         ("f_quarter", "c:dim_date.quarter_name", "Quarter", "quarter", "Dropdown", 60),
         ("f_week", "c:dim_date.week_label", "Week", "week", "Dropdown", 60),
         ("f_region", "c:dim_branch.region", "Region", "region", "Dropdown", 60),
         ("f_branch", "c:dim_branch.branch_name", "Branch", "branch", "Dropdown", 60),
     ]
-    y = 278  # ends at 702: date range (two inputs) 104, dropdowns 60, gaps 4
+    y = 298
     for name, ref, label, group, mode, height in filters:
         page.add(name, 12, y, 186, height, slicer(ref, label, group, mode))
         y += height + 4
     title = {"fontFamily": "Segoe UI Semibold", "fontSize": "18pt", "color": NAVY}
     sub = {"fontFamily": "Segoe UI", "fontSize": "9pt", "color": MUTED}
-    page.add("title", X0 - 6, 6, 700, 40, textbox([(page.title, title)]))
-    page.add("subtitle", X0 - 6, 44, 700, 24, textbox([(page.subtitle, sub)]))
+    page.add("title", X0 - 6, 6, title_w, 40, textbox([(page.title, title)]))
+    page.add("subtitle", X0 - 6, 44, title_w, 24, textbox([(page.subtitle, sub)]))
+    # The date range sits top-right where it has the width to show both dates side by side.
+    page.add(
+        "f_date",
+        DATE_X,
+        8,
+        X1 - DATE_X,
+        62,
+        slicer("c:dim_date.date", "Date range", "date", "Between"),
+    )
 
 
 def kpis(page: Page, items: list[tuple[str, str]]) -> None:
@@ -852,7 +865,7 @@ def customers() -> Page:
 def branch_detail() -> Page:
     """Hidden drill-through page for a single branch."""
     p = Page("branch_detail", "Branch detail", "Drill-through from any branch · use Back to return")
-    chrome(p)
+    chrome(p, title_w=300)
     # A card on a text column needs an aggregation; Min is Power BI's "First" for text.
     name_card = card("c:dim_branch.branch_name", "Branch", GOLD)
     name_card["query"]["queryState"]["Values"]["projections"] = [
@@ -865,8 +878,8 @@ def branch_detail() -> Page:
             "displayName": "Branch",
         }
     ]
-    p.add("name", 760, 10, 400, 58, name_card)
-    p.add("back", 1170, 18, 94, 40, back_button())
+    p.add("name", 530, 10, 290, 58, name_card)
+    p.add("back", 826, 18, 90, 40, back_button())
     kpis(
         p,
         [

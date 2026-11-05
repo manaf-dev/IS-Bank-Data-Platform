@@ -3,11 +3,11 @@
   "name": "executive_f_quarter",
   "position": {
     "x": 12,
-    "y": 450,
-    "z": 5000,
+    "y": 362,
+    "z": 4000,
     "height": 60,
     "width": 186,
-    "tabOrder": 5000
+    "tabOrder": 4000
   },
   "visual": {
     "visualType": "slicer",

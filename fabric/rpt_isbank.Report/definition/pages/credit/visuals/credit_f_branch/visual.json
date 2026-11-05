@@ -3,11 +3,11 @@
   "name": "credit_f_branch",
   "position": {
     "x": 12,
-    "y": 642,
-    "z": 8000,
+    "y": 554,
+    "z": 7000,
     "height": 60,
     "width": 186,
-    "tabOrder": 8000
+    "tabOrder": 7000
   },
   "visual": {
     "visualType": "slicer",

@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "fraud_f_date",
   "position": {
-    "x": 12,
-    "y": 278,
-    "z": 3000,
-    "height": 104,
-    "width": 186,
-    "tabOrder": 3000
+    "x": 924,
+    "y": 8,
+    "z": 10000,
+    "height": 62,
+    "width": 340,
+    "tabOrder": 10000
   },
   "visual": {
     "visualType": "slicer",

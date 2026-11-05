@@ -3,11 +3,11 @@
   "name": "fraud_f_year",
   "position": {
     "x": 12,
-    "y": 386,
-    "z": 4000,
+    "y": 298,
+    "z": 3000,
     "height": 60,
     "width": 186,
-    "tabOrder": 4000
+    "tabOrder": 3000
   },
   "visual": {
     "visualType": "slicer",

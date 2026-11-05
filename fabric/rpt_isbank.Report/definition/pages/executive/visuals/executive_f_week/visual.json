@@ -3,11 +3,11 @@
   "name": "executive_f_week",
   "position": {
     "x": 12,
-    "y": 514,
-    "z": 6000,
+    "y": 426,
+    "z": 5000,
     "height": 60,
     "width": 186,
-    "tabOrder": 6000
+    "tabOrder": 5000
   },
   "visual": {
     "visualType": "slicer",

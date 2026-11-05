@@ -3,11 +3,11 @@
   "name": "fraud_f_region",
   "position": {
     "x": 12,
-    "y": 578,
-    "z": 7000,
+    "y": 490,
+    "z": 6000,
     "height": 60,
     "width": 186,
-    "tabOrder": 7000
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "slicer",
