@@ -45,15 +45,17 @@ export function KpiRow({ filters }: { filters: DashboardFilters }) {
                 return (
                     <div
                         key={field}
-                        className="flex flex-col gap-2 rounded-xl border border-t-4 border-t-gold bg-card px-4 pb-4 pt-3"
+                        className="flex flex-col gap-1 rounded-xl border border-t-4 border-t-gold bg-card px-4 pb-3 pt-3"
                     >
                         <dt className="text-200 font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
-                        <dd className="flex flex-col gap-1">
+                        <dd className="flex flex-col">
                             <span title={value.exact} className="flex items-baseline gap-1.5">
                                 {value.unit && <span className="text-400 font-semibold text-muted-foreground">{value.unit}</span>}
                                 <span
                                     className={cn(
-                                        "font-numeric text-hero-900 font-bold leading-hero-900 tabular-nums",
+                                        // Explicit length syntax: inside cn(), tailwind-merge would drop text-hero-900 as
+                                        // conflicting with the text-* colour class.
+                                        "font-numeric text-[length:var(--text-hero-900)] font-bold leading-hero-900 tabular-nums",
                                         negative ? "text-destructive" : "text-emphasis-foreground",
                                     )}
                                 >
