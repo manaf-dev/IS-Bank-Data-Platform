@@ -1,32 +1,38 @@
 import { useLatestTable } from "@/hooks/use-latest-table";
-import type { DashboardFilters } from "@/lib/dashboard-filters";
 import { type KpiKind, formatKpi } from "@/lib/kpi-format";
-import { toDataTable } from "@/lib/to-data-table";
+import { type ColumnMetadataMap, toDataTable } from "@/lib/to-data-table";
 import { cn } from "@/lib/utils";
-import { executive } from "@/queries";
 import { ErrorBanner, Skeleton } from "./states";
 
-/** Cards in display order, by column alias. Notes stay short: they wrap, never truncate. */
-const CARDS: { field: string; label: string; kind: KpiKind; note: string }[] = [
-    { field: "Customers", label: "Customers", kind: "count", note: "All time; ignores filters" },
-    { field: "ActiveCustomers", label: "Active customers", kind: "count", note: "Transacted in period" },
-    { field: "Deposits", label: "Deposits", kind: "money", note: "Latest month-end" },
-    { field: "LoanPrincipal", label: "Loan book", kind: "money", note: "Ignores period" },
-    { field: "NplRatio", label: "NPL ratio", kind: "percent", note: "Arrears and default" },
-    { field: "NetProfit", label: "Net profit", kind: "money", note: "Income less expenses" },
-];
+export interface KpiCardDef {
+    /** Column alias in the query's columnMetadata. */
+    field: string;
+    label: string;
+    kind: KpiKind;
+    /** Short context line; it wraps, so keep it to a few words. */
+    note: string;
+}
 
-const GRID = "grid grid-cols-2 gap-grid md:grid-cols-3 xl:grid-cols-6";
+interface KpiRowProps {
+    config: { connection: string; query: string; columnMetadata: ColumnMetadataMap };
+    cards: KpiCardDef[];
+}
 
-export function KpiRow({ filters }: { filters: DashboardFilters }) {
-    const config = executive.kpis.executiveKpis(filters);
+const GRID: Record<number, string> = {
+    5: "grid grid-cols-2 gap-grid md:grid-cols-3 xl:grid-cols-5",
+    6: "grid grid-cols-2 gap-grid md:grid-cols-3 xl:grid-cols-6",
+};
+
+/** A row of headline figures from a single-row KPI query. */
+export function KpiRow({ config, cards }: KpiRowProps) {
     const { table, isLoading, error } = useLatestTable(config.connection, config.query);
+    const grid = GRID[cards.length] ?? GRID[6];
 
     if (error) return <ErrorBanner message={error} />;
     if (!table) {
         return (
-            <div className={GRID}>
-                {CARDS.map((c) => (
+            <div className={grid}>
+                {cards.map((c) => (
                     <Skeleton key={c.field} className="h-32" />
                 ))}
             </div>
@@ -36,8 +42,8 @@ export function KpiRow({ filters }: { filters: DashboardFilters }) {
     const data = toDataTable(table, config.columnMetadata);
     const row = data.rows[0] ?? [];
     return (
-        <dl aria-busy={isLoading} className={cn(GRID, "transition-opacity", isLoading && "opacity-60")}>
-            {CARDS.map(({ field, label, kind, note }) => {
+        <dl aria-busy={isLoading} className={cn(grid, "transition-opacity", isLoading && "opacity-60")}>
+            {cards.map(({ field, label, kind, note }) => {
                 const index = data.columns.findIndex((c) => c.name === field);
                 const raw = index >= 0 ? row[index] : null;
                 const value = formatKpi(typeof raw === "number" ? raw : null, kind);

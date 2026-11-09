@@ -6,7 +6,7 @@
 //-----------------------------------------------------------------------
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { readCssTheme } from "@microsoft/fabric-visuals-core";
 import App from "@/App";
 import { ThemeContext } from "@/hooks/theme.context";
@@ -58,6 +58,16 @@ describe("App", () => {
         expect(await screen.findByText("Net profit")).toBeInTheDocument();
         expect(screen.getByText("92.3M")).toBeInTheDocument();
         expect(screen.getByText("NPL ratio")).toBeInTheDocument();
+    });
+
+    it("switches to the Branches page and keeps the shared filters", async () => {
+        renderApp();
+        fireEvent.click(screen.getByRole("button", { name: "Branches" }));
+        expect(screen.getByRole("heading", { name: "Branch performance" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Branches" })).toHaveAttribute("aria-current", "page");
+        expect(await screen.findByText("GL vs core breaks")).toBeInTheDocument();
+        expect(screen.getByLabelText("Region")).toBeInTheDocument();
+        expect(await screen.findByText("No ledger entries for the selected filters.")).toBeInTheDocument();
     });
 
     it("shows an empty message for charts without rows", async () => {

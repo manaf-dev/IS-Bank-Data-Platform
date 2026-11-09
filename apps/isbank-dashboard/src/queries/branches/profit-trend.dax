@@ -1,0 +1,7 @@
+EVALUATE
+SUMMARIZECOLUMNS (
+    'dim_date'[year],
+    'dim_date'[month],
+    "Net Profit", [Net Profit]
+)
+ORDER BY 'dim_date'[year], 'dim_date'[month]

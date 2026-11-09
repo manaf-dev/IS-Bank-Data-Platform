@@ -1,0 +1,8 @@
+EVALUATE
+ROW (
+    "Income", [Income],
+    "Expense", [Expense],
+    "Net Profit", [Net Profit],
+    "Cost-to-Income Ratio", [Cost-to-Income Ratio],
+    "Reconciliation Breaks", [Reconciliation Breaks]
+)
