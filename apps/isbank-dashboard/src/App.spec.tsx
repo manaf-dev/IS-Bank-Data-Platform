@@ -55,7 +55,8 @@ describe("App", () => {
         for (const label of ["Year", "Quarter", "Region", "Branch"]) {
             expect(screen.getByLabelText(label)).toBeInTheDocument();
         }
-        expect(await screen.findByText("Net profit (GHS)")).toBeInTheDocument();
+        expect(await screen.findByText("Net profit")).toBeInTheDocument();
+        expect(screen.getByText("92.3M")).toBeInTheDocument();
         expect(screen.getByText("NPL ratio")).toBeInTheDocument();
     });
 

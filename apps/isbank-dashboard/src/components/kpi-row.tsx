@@ -1,32 +1,33 @@
-import { KpiCard } from "@microsoft/fabric-visuals";
-import { useThemeContext } from "@/hooks/theme.context";
 import { useLatestTable } from "@/hooks/use-latest-table";
 import type { DashboardFilters } from "@/lib/dashboard-filters";
+import { type KpiKind, formatKpi } from "@/lib/kpi-format";
 import { toDataTable } from "@/lib/to-data-table";
+import { cn } from "@/lib/utils";
 import { executive } from "@/queries";
 import { ErrorBanner, Skeleton } from "./states";
 
-/** Cards in display order, by column alias, with a note where a measure ignores some filters. */
-const CARDS: { field: string; note?: string }[] = [
-    { field: "Customers", note: "All customers; not filtered by period or branch" },
-    { field: "ActiveCustomers" },
-    { field: "Deposits", note: "Latest month-end balance" },
-    { field: "LoanPrincipal", note: "Whole book; not filtered by period" },
-    { field: "NplRatio", note: "Arrears and default share of open book" },
-    { field: "NetProfit" },
+/** Cards in display order, by column alias. Notes stay short: they wrap, never truncate. */
+const CARDS: { field: string; label: string; kind: KpiKind; note: string }[] = [
+    { field: "Customers", label: "Customers", kind: "count", note: "All time; ignores filters" },
+    { field: "ActiveCustomers", label: "Active customers", kind: "count", note: "Transacted in period" },
+    { field: "Deposits", label: "Deposits", kind: "money", note: "Latest month-end" },
+    { field: "LoanPrincipal", label: "Loan book", kind: "money", note: "Ignores period" },
+    { field: "NplRatio", label: "NPL ratio", kind: "percent", note: "Arrears and default" },
+    { field: "NetProfit", label: "Net profit", kind: "money", note: "Income less expenses" },
 ];
 
+const GRID = "grid grid-cols-2 gap-grid md:grid-cols-3 xl:grid-cols-6";
+
 export function KpiRow({ filters }: { filters: DashboardFilters }) {
-    const { theme } = useThemeContext();
     const config = executive.kpis.executiveKpis(filters);
     const { table, isLoading, error } = useLatestTable(config.connection, config.query);
 
     if (error) return <ErrorBanner message={error} />;
     if (!table) {
         return (
-            <div className="grid grid-cols-2 gap-grid md:grid-cols-3 xl:grid-cols-6">
+            <div className={GRID}>
                 {CARDS.map((c) => (
-                    <Skeleton key={c.field} className="h-28" />
+                    <Skeleton key={c.field} className="h-32" />
                 ))}
             </div>
         );
@@ -35,22 +36,36 @@ export function KpiRow({ filters }: { filters: DashboardFilters }) {
     const data = toDataTable(table, config.columnMetadata);
     const row = data.rows[0] ?? [];
     return (
-        <div aria-busy={isLoading} className="grid grid-cols-2 gap-grid md:grid-cols-3 xl:grid-cols-6">
-            {CARDS.map(({ field, note }) => {
+        <dl aria-busy={isLoading} className={cn(GRID, "transition-opacity", isLoading && "opacity-60")}>
+            {CARDS.map(({ field, label, kind, note }) => {
                 const index = data.columns.findIndex((c) => c.name === field);
-                const column = data.columns[index];
                 const raw = index >= 0 ? row[index] : null;
-                const value = typeof raw === "number" ? raw : null;
+                const value = formatKpi(typeof raw === "number" ? raw : null, kind);
+                const negative = typeof raw === "number" && raw < 0;
                 return (
-                    <KpiCard
+                    <div
                         key={field}
-                        theme={theme}
-                        header={{ title: column?.displayName ?? field, subtitle: note }}
-                        callout={{ metric: { value, format: column?.format } }}
-                        className="border-t-4 border-t-gold"
-                    />
+                        className="flex flex-col gap-2 rounded-xl border border-t-4 border-t-gold bg-card px-4 pb-4 pt-3"
+                    >
+                        <dt className="text-200 font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
+                        <dd className="flex flex-col gap-1">
+                            <span title={value.exact} className="flex items-baseline gap-1.5">
+                                {value.unit && <span className="text-300 font-semibold text-muted-foreground">{value.unit}</span>}
+                                <span
+                                    className={cn(
+                                        "font-numeric text-hero-700 font-bold leading-hero-700 tabular-nums",
+                                        negative ? "text-destructive" : "text-emphasis-foreground",
+                                    )}
+                                >
+                                    {value.display}
+                                </span>
+                                <span className="sr-only">({value.exact})</span>
+                            </span>
+                            <span className="text-200 text-muted-foreground">{note}</span>
+                        </dd>
+                    </div>
                 );
             })}
-        </div>
+        </dl>
     );
 }
