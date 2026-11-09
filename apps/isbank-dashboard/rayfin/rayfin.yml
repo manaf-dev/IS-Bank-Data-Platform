@@ -8,6 +8,8 @@ services:
       enabled: true
     allowedRedirectUris:
       - http://localhost:5173
+      - http://127.0.0.1:5173
+      - https://proud-field-442cae7289-westus3.webapp.fabricapps.net
   data:
     enabled: false
   storage:
@@ -17,6 +19,9 @@ services:
     folder: dist
     buildCommand: npm run build:fabric
     indexDocument: index.html
+    assetAccess: protected
+  functions:
+    enabled: false
 connectors:
   - name: isbank
     type: fabric-semanticmodel
