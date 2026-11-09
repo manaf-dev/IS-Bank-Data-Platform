@@ -124,7 +124,8 @@
 
   /* Font Families
      Usage: font-* (e.g. font-heading, font-base) */
-  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;    /* headings, titles, display text */
+  --font-heading: 'IBM Plex Sans', 'Segoe UI', -apple-system,       /* headings, titles, display text */
+    BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   --font-base: 'IBM Plex Sans', 'Segoe UI', -apple-system,          /* body text, labels, UI controls */
     BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   --font-monospace: Consolas, 'Courier New', Courier, monospace;     /* code, pre-formatted text */

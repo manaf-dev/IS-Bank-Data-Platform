@@ -50,10 +50,10 @@ export function KpiRow({ filters }: { filters: DashboardFilters }) {
                         <dt className="text-200 font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
                         <dd className="flex flex-col gap-1">
                             <span title={value.exact} className="flex items-baseline gap-1.5">
-                                {value.unit && <span className="text-300 font-semibold text-muted-foreground">{value.unit}</span>}
+                                {value.unit && <span className="text-400 font-semibold text-muted-foreground">{value.unit}</span>}
                                 <span
                                     className={cn(
-                                        "font-numeric text-hero-700 font-bold leading-hero-700 tabular-nums",
+                                        "font-numeric text-hero-900 font-bold leading-hero-900 tabular-nums",
                                         negative ? "text-destructive" : "text-emphasis-foreground",
                                     )}
                                 >
