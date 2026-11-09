@@ -1,0 +1,120 @@
+# Visual Container
+
+`VegaVisual`, `DataGrid`, and `KpiCard` already wrap themselves in a `VisualContainer` — that is the default path and needs no extra component.
+
+Refer to `node_modules/@microsoft/fabric-visuals-extensibility/README.md` for the complete component API — every prop, type, and option. This reference covers the container patterns and constraints needed when building the template.
+
+## Turning actions on/off
+
+The container's built-in actions can be on or off by default. Use `visualContainerCapabilities` to toggle the add or remove any actions.
+
+```tsx
+<DataGrid
+    data={dataTable}
+    theme={theme}
+    header={{ title: "Top Products" }}
+    visualContainerCapabilities={{ allowCopyVisual: false }}
+/>
+```
+
+Full set: `VisualContainerCapabilities` under *Visual Container Framing* in `node_modules/@microsoft/fabric-visuals-core/README.md`.
+
+## Layout and card styling
+
+Use `containerRootClassName` for grid spans, flex placement, margins, and whole-frame sizing. Use `containerClassName` for the **inner card surface**: background, border, radius, and padding. A renderer's own `className` still styles the visual inside the card.
+
+```tsx
+<section className="grid gap-grid lg:grid-cols-3">
+    <VegaVisual
+        spec={vegaLiteSpec}
+        data={dataTable}
+        theme={theme}
+        header={{ title: "Sales momentum" }}
+        containerRootClassName="h-96 lg:col-span-2"
+        containerClassName="rounded-xl border bg-card p-4"
+    />
+    <DataGrid
+        data={summaryTable}
+        theme={theme}
+        header={{ title: "Summary" }}
+        containerRootClassName="h-96"
+    />
+</section>
+```
+
+No layout wrapper is needed for these self-framing React components. Give virtualized grids a definite height; `min-h-*` alone is not a viewport constraint. Both framing class props are ignored when `chromeless` removes the frame or a hand-authored `VisualContainer` owns it.
+
+## Wrapping a visual yourself
+
+Hand-author a container only when the default path doesn't cover what you need:
+
+- custom actions, custom behavior on a built-in action (e.g. confirm before copy), or driving them programmatically — a PNG download, or Copy from a button elsewhere on the page
+- the same chrome around a custom visual that does not frame itself
+
+```tsx
+import { VisualContainer } from "@microsoft/fabric-visuals-extensibility";
+import type { VisualContainerAction, VisualContainerHandle } from "@microsoft/fabric-visuals-extensibility";
+```
+
+Move the chrome up to the container and pass `chromeless` on the visual inside. Put the `header` on the container, not the visual:
+
+```tsx
+<VisualContainer
+    header={{ title: "Revenue by Region", subtitle: "Last 12 months" }}
+    builtInActions={{ copyVisual: {} }}
+    customActions={[containerAction]}
+>
+    <VegaVisual
+        spec={vegaLiteSpec}
+        data={dataTable}
+        theme={theme}
+        chromeless
+    />
+</VisualContainer>
+```
+
+| Prop | Type | Notes |
+|---|---|---|
+| `header` | `{ title, subtitle? }` or a React node | Optional. With a header the toolbar sits in the header row; without one it floats over the visual. |
+| `builtInActions` | `BuiltInActions` | Built-in actions by optional keyed configuration — `copyVisual` uses `CopyActionContext` (`{}`); `viewAsTable` uses `ShowAsTableActionContext` (`{ tableSource: provider }`). Rendered in order ahead of custom actions. |
+| `customActions` | `VisualContainerAction[]` | Your own buttons, rendered after the built-ins. |
+| `maxVisibleButtons` | `number` | Buttons beyond this collapse into a `…` overflow menu. Defaults to `2`. |
+| `rootClassName` | `string` | Merged onto the outermost element for placement and whole-container sizing. On a self-framing `VegaVisual` / `DataGrid` / `KpiCard`, use `containerRootClassName`. |
+| `className` | `string` | Merged onto the inner card surface for background, border, radius, and padding, not outer layout. On a self-framing `VegaVisual` / `DataGrid` / `KpiCard`, use `containerClassName`. |
+
+Keep `copyVisual` in `builtInActions` — a hand-authored container is still expected to be copyable. Don't rebuild Copy as a custom action.
+
+For Show as a table, supply a provider returning `VisualTable[]` or `null` (or a promise of either) in
+the `"viewAsTable"` context. A hand-authored container must supply the provider
+explicitly; a self-framing `VegaVisual` does so automatically. Omit a property
+(or set it to `undefined`) to disable its action. Replace the configuration object
+to change actions or contexts rather than mutating it in place. A `null` result
+shows the empty state; provider failures still show the error state.
+
+## Custom actions
+
+```tsx
+const containerAction: VisualContainerAction = {
+    id: "custom-action",
+    label: "Action label",     // used as both the tooltip and the aria-label
+    icon: <ActionIcon className="icon-size-200" />,
+    onClick: () => runAction(),   // may be async
+};
+```
+
+## Programmatic capture
+
+Use a `ref` only for behavior with no built-in equivalent — e.g. downloading the visual as a file, or copying it from a button outside the container:
+
+```tsx
+const ref = useRef<VisualContainerHandle>(null);
+
+const blob = await ref.current?.captureAsImage();   // PNG Blob
+await ref.current?.copyImageToClipboard();          // capture + clipboard, no toast
+
+<VisualContainer ref={ref} header={{ title: "Revenue" }} builtInActions={{ copyVisual: {} }}>
+    <VegaVisual spec={spec} data={dataTable} theme={theme} chromeless />
+</VisualContainer>
+```
+
+For content with no container at all, the same two steps are exported standalone: `captureElementAsImage(element)` and `writeImageToClipboard(blob, { title, timestamp })`.

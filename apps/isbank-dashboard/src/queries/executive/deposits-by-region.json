@@ -1,0 +1,12 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "encoding": {
+    "y": { "field": "Region", "type": "nominal", "sort": "-x", "title": null },
+    "x": { "field": "Deposits", "type": "quantitative", "title": null },
+    "tooltip": [{ "field": "Region", "type": "nominal" }, { "field": "Deposits", "type": "quantitative" }]
+  },
+  "layer": [
+    { "mark": { "type": "bar", "cursor": "pointer" } },
+    { "mark": { "type": "text", "style": "labelHorizontal" }, "encoding": { "text": { "field": "Deposits", "type": "quantitative" } } }
+  ]
+}

@@ -1,0 +1,6 @@
+EVALUATE
+SUMMARIZECOLUMNS (
+    'dim_channel'[channel],
+    "Transactions", [Transactions]
+)
+ORDER BY 'dim_channel'[channel]

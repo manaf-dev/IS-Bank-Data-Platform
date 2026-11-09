@@ -1,0 +1,14 @@
+{
+  "cliVersion": "1.36.2",
+  "items": {
+    "skill:rayfin-connectors": {
+      "sha256": "58333b4bdbbf2cb63e0b42f605c99678fcb5964d56b379f6f99933f0e9929eac",
+      "source": {
+        "id": "@microsoft/rayfin-cli",
+        "kind": "cli",
+        "versionOrSha": "1.36.2"
+      }
+    }
+  },
+  "version": 1
+}

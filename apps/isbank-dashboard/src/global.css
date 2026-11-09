@@ -1,0 +1,215 @@
+@layer fabric-visual-tokens, theme, base, fabric-visuals, components, utilities;
+
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* These tokens are consumed directly as CSS variables, so emit them
+   even when no Tailwind utility references them. */
+@theme static {
+  --color-brand:            #0b1f3a;  /* IS Bank navy: header band, selected states */
+  --color-brand-foreground: #0b1f3a;  /* brand-colored content on standard surfaces */
+  --color-gold:             #c9a227;  /* IS Bank gold: rules and accents, never body text */
+  --color-on-gold:          #0b1f3a;
+  /* Data palette: navy, deep gold, then supporting hues; each >= 3:1 on white. */
+  --color-data-1:  #0b1f3a;
+  --color-data-2:  #9a7614;
+  --color-data-3:  #2e6da4;
+  --color-data-4:  #4c7a6e;
+  --color-data-5:  #b5523b;
+  --color-data-6:  #5b6b82;
+  --color-data-7:  #7a5c99;
+  --color-data-8:  #2f8a8a;
+  --color-data-9:  #8a6a3a;
+  --color-data-10: #3e4c63;
+  --color-hover:            rgba(0, 0, 0, 0.04);  /* row/cell hover surface in DataGrid + visuals */
+  --color-emphasis-foreground: #0b1f3a;  /* page and visual titles, KPI values */
+  --font-page-title: var(--font-heading);
+  --font-page-subtitle: var(--font-base);
+  --font-visual-title: var(--font-heading);
+  --font-visual-subtitle: var(--font-base);
+  --font-data-label: var(--font-base);
+  --text-page-title: var(--text-600);
+  --text-page-title--font-weight: var(--font-weight-semibold);
+  --text-page-subtitle: var(--text-300);
+  --text-page-subtitle--font-weight: var(--font-weight-regular);
+  --text-visual-title: var(--text-400);
+  --text-visual-title--font-weight: var(--font-weight-semibold);
+  --text-visual-subtitle: var(--text-300);
+  --text-visual-subtitle--font-weight: var(--font-weight-regular);
+  --text-data-label: 11px;
+  --text-data-label--font-weight: var(--font-weight-regular);
+  --text-kpi-value: var(--text-600);
+  --text-kpi-value--font-weight: var(--font-weight-bold);
+}
+
+@theme {
+  /* Color tokens — light theme
+     Usage: bg-*, text-*, border-* (e.g. bg-brand text-on-brand). */
+  --color-background: #f3f4f7;                                       /* page background */
+  --color-foreground: #1b2a41;                                       /* default text */
+
+  --color-card: #ffffff;                                             /* card and elevated surfaces */
+
+  --color-on-brand: #ffffff;                                         /* text/icons on brand surfaces */
+
+  --color-muted: #f0f0f0;                                            /* subtle backgrounds */
+  --color-muted-foreground: #5b6b82;                                 /* subdued text */
+
+  --color-accent: #f5f5f5;                                           /* accent highlights */
+
+  --color-destructive: #b10e1c;                                      /* errors & destructive actions */
+  --color-destructive-foreground: #ffffff;
+
+  --color-success: #0e700e;                                          /* success surfaces */
+  --color-success-foreground: #ffffff;
+
+  --color-border: #e1e5eb;                                           /* default border */
+  --color-ring: #9a7614;                                             /* focus rings */
+
+  --shadow-container-2:  var(--shadow-xs);
+  --shadow-container-4:  var(--shadow-sm);
+  --shadow-container-8:  var(--shadow-md);
+  --shadow-container-16: var(--shadow-lg);
+
+  --radius-none: 0;
+  --radius-sm: calc(2px * var(--radius-scale, 1));
+  --radius-md: calc(4px * var(--radius-scale, 1));
+  --radius-lg: calc(6px * var(--radius-scale, 1));
+  --radius-xl: calc(8px * var(--radius-scale, 1));
+  --radius-2xl: calc(12px * var(--radius-scale, 1));
+  --radius-3xl: calc(16px * var(--radius-scale, 1));
+  --radius-4xl: calc(24px * var(--radius-scale, 1));
+  --radius-5xl: calc(32px * var(--radius-scale, 1));
+  --radius-6xl: calc(40px * var(--radius-scale, 1));
+  --radius-full: calc(9999px * var(--radius-scale, 1));
+  --radius: calc(8px * var(--radius-scale, 1));
+
+  /* Spacing base unit
+     Usage: p-*, m-*, gap-* (e.g. p-4 gap-3) */
+  --spacing: 4px;
+
+  /* Font Sizes — 100-based scale 
+     Usage: text-* (e.g. text-300, text-hero-900) */
+  --text-100: 10px;
+  --text-200: 12px;
+  --text-300: 14px;
+  --text-400: 16px;
+  --text-500: 20px;
+  --text-600: 24px;
+  --text-hero-700: 28px;
+  --text-hero-800: 32px;
+  --text-hero-900: 40px;
+  --text-hero-1000: 68px;
+
+  /* Line Heights — paired with font sizes
+     Usage: leading-* (e.g. leading-300) */
+  --leading-100: 14px;
+  --leading-200: 16px;
+  --leading-300: 20px;
+  --leading-400: 22px;
+  --leading-500: 28px;
+  --leading-600: 32px;
+  --leading-hero-700: 36px;
+  --leading-hero-800: 40px;
+  --leading-hero-900: 52px;
+  --leading-hero-1000: 92px;
+
+  /* Font Weights
+     Usage: font-* (e.g. font-semibold) */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Font Families
+     Usage: font-* (e.g. font-heading, font-base) */
+  --font-heading: 'IBM Plex Sans', 'Segoe UI', -apple-system,       /* headings, titles, display text */
+    BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-base: 'IBM Plex Sans', 'Segoe UI', -apple-system,          /* body text, labels, UI controls */
+    BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-monospace: Consolas, 'Courier New', Courier, monospace;     /* code, pre-formatted text */
+  --font-numeric: 'IBM Plex Sans', Bahnschrift, 'Segoe UI',        /* KPI values, numeric displays */
+    -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+
+  /* Icon Sizes — 100-based scale
+     Usage: icon-size-* custom utility (e.g. icon-size-200) */
+  --icon-size-100: 12px;
+  --icon-size-200: 16px;
+  --icon-size-300: 20px;
+  --icon-size-400: 24px;
+  --icon-size-500: 28px;
+  --icon-size-600: 32px;
+  --icon-size-700: 48px;
+}
+
+@utility gap-grid {
+  gap: var(--grid-gap, calc(var(--spacing) * 4));
+}
+
+@utility icon-size-* {
+  width: --value(--icon-size-*);
+  height: --value(--icon-size-*);
+}
+
+@layer base {
+  .dark {
+    /* Color tokens — dark theme */
+    --color-background: #0a1426;
+    --color-foreground: #e8ecf2;
+
+    --color-card: #12223d;
+
+    --color-on-brand: #ffffff;
+
+    --color-muted: #0e1b31;
+    --color-muted-foreground: #a9b4c4;
+
+    --color-accent: #3d3d3d;
+
+    --color-destructive: #dc626d;
+    --color-destructive-foreground: #ffffff;
+
+    --color-success: #54b054;
+    --color-success-foreground: #ffffff;
+
+    --color-border: #24375a;
+    --color-ring: #e0b94a;
+
+    --color-brand:            #0b1f3a;
+    --color-brand-foreground: #e0b94a;
+    --color-data-1:  #8fb3e0;
+    --color-data-2:  #e0b94a;
+    --color-data-3:  #5fa8d3;
+    --color-data-4:  #7fbfa9;
+    --color-data-5:  #e08a6d;
+    --color-data-6:  #b4c0d3;
+    --color-data-7:  #b79ad6;
+    --color-data-8:  #6fcaca;
+    --color-data-9:  #d4b07a;
+    --color-data-10: #9fb0cc;
+    --color-hover:            rgba(255, 255, 255, 0.09);
+    --color-emphasis-foreground: #f5f7fa;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Native form controls don't inherit the page font by default. */
+select, input, textarea, button {
+  font-family: inherit;
+}

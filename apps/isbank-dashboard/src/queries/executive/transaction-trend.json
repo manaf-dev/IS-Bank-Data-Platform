@@ -1,0 +1,13 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "transform": [{ "calculate": "datetime(datum.Year, datum.Month - 1, 1)", "as": "MonthStart" }],
+  "mark": { "type": "area", "line": true },
+  "encoding": {
+    "x": { "field": "MonthStart", "type": "temporal", "timeUnit": "yearmonth", "title": null },
+    "y": { "field": "TransactionValue", "type": "quantitative", "title": null },
+    "tooltip": [
+      { "field": "MonthStart", "type": "temporal", "timeUnit": "yearmonth", "title": "Month" },
+      { "field": "TransactionValue", "type": "quantitative" }
+    ]
+  }
+}
