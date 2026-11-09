@@ -1,0 +1,12 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "encoding": {
+    "y": { "field": "Branch", "type": "nominal", "sort": "-x", "title": null },
+    "x": { "field": "NetProfit", "type": "quantitative", "title": null },
+    "tooltip": [{ "field": "Branch", "type": "nominal" }, { "field": "NetProfit", "type": "quantitative" }]
+  },
+  "layer": [
+    { "mark": { "type": "bar", "cursor": "pointer" } },
+    { "mark": { "type": "text", "style": "labelHorizontal" }, "encoding": { "text": { "field": "NetProfit", "type": "quantitative" } } }
+  ]
+}

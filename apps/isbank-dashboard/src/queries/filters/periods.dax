@@ -1,0 +1,8 @@
+EVALUATE
+SUMMARIZECOLUMNS (
+    'dim_date'[year],
+    'dim_date'[quarter],
+    'dim_date'[quarter_name],
+    "Transactions", [Transactions]
+)
+ORDER BY 'dim_date'[year], 'dim_date'[quarter]

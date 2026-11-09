@@ -2,18 +2,29 @@ id: isbank-dashboard
 name: IS Bank Dashboard
 version: 1.0.0
 services:
+  auth:
+    enabled: true
+    fabric:
+      enabled: true
+    allowedRedirectUris:
+      - http://localhost:5173
+  data:
+    enabled: false
+  storage:
+    enabled: false
+  staticHosting:
+    enabled: true
+    folder: dist
+    buildCommand: npm run build:fabric
+    indexDocument: index.html
+connectors:
+  - name: isbank
+    type: fabric-semanticmodel
+    config:
+      workspaceId: fd3581c9-57eb-407a-9386-99a29953f818
+      itemId: 938d49d1-cb2a-4a23-9ae7-85ee5f89fe89
     auth:
-        enabled: true
-        fabric:
-          enabled: true
-        allowedRedirectUris:
-            - http://localhost:5173
-    data:
-        enabled: false
-    storage:
-        enabled: false
-    staticHosting:
-        enabled: true
-        folder: dist
-        buildCommand: npm run build:fabric
-        indexDocument: index.html
+      type: delegated
+    version: "1"
+    operations:
+      - name: executeQuery

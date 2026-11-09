@@ -1,0 +1,9 @@
+EVALUATE
+ROW (
+    "Customers", [Customers],
+    "Active Customers", [Active Customers],
+    "Deposits", [Deposits],
+    "Loan Principal", [Loan Principal],
+    "NPL Ratio", [NPL Ratio],
+    "Net Profit", [Net Profit]
+)

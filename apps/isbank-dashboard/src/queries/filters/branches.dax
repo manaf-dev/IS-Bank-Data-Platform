@@ -1,0 +1,6 @@
+EVALUATE
+SUMMARIZECOLUMNS (
+    'dim_branch'[region],
+    'dim_branch'[branch_name]
+)
+ORDER BY 'dim_branch'[region], 'dim_branch'[branch_name]
