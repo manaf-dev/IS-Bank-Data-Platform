@@ -24,6 +24,7 @@ See [docs/architecture.md](docs/architecture.md) and the decision records in [do
 generator/      Synthetic world simulator, per-system projectors, and emitters (runs outside Fabric)
 src/isbank/     Shared platform library, packaged as a wheel for Fabric
 fabric/         Fabric Git-synced items (managed by Fabric Git integration)
+apps/           Fabric App (web dashboard) built on the sm_isbank semantic model
 tests/          pytest suite
 docs/           Architecture, data dictionary, source-system specs, ADRs
 ```
@@ -54,14 +55,23 @@ Use `--profile full` for the 50k-customer world (about 7M postings). Output is r
 
 ## Status
 
-**Phase 1: Synthetic world and source emitters.** The world simulator, nine source projectors, the answer key, and local emitters are built and tested. Landing the data in the Fabric workspace is next.
+**Phases 0 to 3 are complete:** ingestion, Silver, Gold and the Power BI layer are built. A Fabric App version of the dashboard is in progress.
 
-| Phase | Scope |
-|---|---|
-| 0 | Foundation |
-| 1 | Synthetic world and source emitters |
-| 2 | Batch pipeline: ingestion, Silver, entity resolution, DQ |
-| 3 | Gold and BI: star schema, semantic model, dashboards with RLS |
-| 4 | Real-time: Eventstream, Eventhouse, fraud rules, alerts |
-| 5 | Data science: features, training, MLflow, batch scoring |
-| 6 | Productionization: CI/CD, monitoring, documentation |
+| Phase | Scope | Status |
+|---|---|---|
+| 0 | Foundation | Done |
+| 1 | Synthetic world and source emitters | Done |
+| 2 | Batch pipeline: ingestion, Silver, entity resolution, DQ | Done |
+| 3 | Gold and BI: star schema, semantic model, dashboards with RLS | Done |
+| 4 | Real-time: Eventstream, Eventhouse, fraud rules, alerts | Planned |
+| 5 | Data science: features, training, MLflow, batch scoring | Planned |
+| 6 | Productionization: CI/CD, monitoring, documentation | Planned |
+
+### What's built
+
+- **Bronze** (`nb_bronze_ingest` → `lh_bronze`): lands every source system's files as raw, append-only data with ingestion metadata.
+- **Silver** (`nb_silver_build` → `lh_silver`): typing, standardisation and deduplication (including double postings), SCD2 customer history, and entity resolution that links core CIFs, loan applicants and bureau records to one golden party id (Ghana Card, date of birth + mobile, or date of birth + fuzzy name match). Data quality rules quarantine failing rows instead of dropping them.
+- **Gold** (`nb_gold_build` → `wh_gold`): a star schema of 7 dimensions and 7 fact tables, with masked names, account numbers and card PANs, plus a GL-vs-core fee reconciliation (`recon_gl_fees`).
+- **Run audit**: every notebook step records what ran, rows written, status and duration in `run_audit`.
+- **Power BI**: the `sm_isbank` semantic model, with row-level security for the Executive and Branch Manager roles (driven by `sec_user_branch`), and `rpt_isbank`, a six-page report: Executive summary, Branch performance, Branch detail (drill-through), Customers and digital, Credit risk, and Fraud and card activity.
+- **Fabric App** (in progress, `apps/isbank-dashboard`): a web version of the dashboard on `sm_isbank`, with the Executive and Branches pages done.
