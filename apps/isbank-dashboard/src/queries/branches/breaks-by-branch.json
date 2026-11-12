@@ -1,0 +1,12 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "encoding": {
+    "y": { "field": "Branch", "type": "nominal", "sort": "-x", "title": null },
+    "x": { "field": "Breaks", "type": "quantitative", "title": null },
+    "tooltip": [{ "field": "Branch", "type": "nominal" }, { "field": "Breaks", "type": "quantitative" }]
+  },
+  "layer": [
+    { "mark": { "type": "bar", "cursor": "pointer", "color": "#b5523b" } },
+    { "mark": { "type": "text", "style": "labelHorizontal" }, "encoding": { "text": { "field": "Breaks", "type": "quantitative" } } }
+  ]
+}
